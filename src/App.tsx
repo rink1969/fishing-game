@@ -49,6 +49,8 @@ export default function App() {
   const [thinking, setThinking] = useState(false)
   const [aiError, setAiError] = useState<string | null>(null)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const settingsOpenRef = useRef(settingsOpen)
+  settingsOpenRef.current = settingsOpen
   const [muted, setMuted] = useState(false)
   const [voiceOn, setVoiceOn] = useState(() => localStorage.getItem('fishing-voice-on') !== '0')
   const voiceOnRef = useRef(voiceOn)
@@ -176,11 +178,18 @@ export default function App() {
     engineRef.current?.setMuted(muted)
   }, [muted])
 
+  // 打开设置时暂停整个游戏：冻结引擎、停止朗读
+  useEffect(() => {
+    engineRef.current?.setPaused(settingsOpen)
+    if (settingsOpen) stopSpeaking()
+  }, [settingsOpen])
+
   // ---------------- 等待时的闲聊（每 22~40 秒） ----------------
   useEffect(() => {
     let timer = 0
     let next = 22 + Math.random() * 18
     const iv = window.setInterval(() => {
+      if (settingsOpenRef.current) return // 设置打开时游戏暂停，不闲聊
       timer += 1
       if (timer < next) return
       const st = engineRef.current?.getState()

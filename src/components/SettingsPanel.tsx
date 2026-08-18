@@ -45,6 +45,9 @@ export default function SettingsPanel({
           <h2 className="text-lg font-bold">⚙️ 设置</h2>
           <button onClick={onClose} className="rounded-lg px-2 py-1 text-stone-400 hover:bg-white/10 hover:text-white">✕</button>
         </div>
+        <div className="mb-4 rounded-lg bg-amber-400/10 px-3 py-1.5 text-center text-xs text-amber-300/90">
+          ⏸ 游戏已暂停，关闭设置后继续
+        </div>
 
         {/* AI 氛围组 */}
         <section className="mb-5 rounded-xl bg-white/5 p-4">

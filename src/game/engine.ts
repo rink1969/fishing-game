@@ -167,6 +167,7 @@ export class FishingEngine {
   private raf = 0
   private lastTs = 0
   private running = false
+  private paused = false
   private time = 0
   private stateT = 0
 
@@ -251,6 +252,8 @@ export class FishingEngine {
     this.detachInput?.()
   }
   setMuted(m: boolean) { this.sfx.muted = m }
+  /** 暂停/恢复（设置面板打开时用）：冻结状态机并屏蔽输入，画面保持最后一帧 */
+  setPaused(p: boolean) { this.paused = p }
   getState() { return this.state }
   getStateTime() { return this.stateT }
   /** 当前游戏内环境信息（供 AI 生成有梗台词） */
@@ -289,6 +292,7 @@ export class FishingEngine {
   }
 
   press() {
+    if (this.paused) return
     if (this.pressed) return
     this.pressed = true
     switch (this.state) {
@@ -307,6 +311,7 @@ export class FishingEngine {
 
   release() {
     this.pressed = false
+    if (this.paused) return
     if (this.state === 'charging') this.doCast()
   }
 
@@ -389,6 +394,7 @@ export class FishingEngine {
   }
 
   private update(dt: number) {
+    if (this.paused) return
     this.time += dt
     this.stateT += dt
     // 游戏内一天 = 4 分钟

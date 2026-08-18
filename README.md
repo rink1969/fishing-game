@@ -48,6 +48,16 @@ npm run build:static   # 纯静态版：dist/ 下只有 index.html + app.js + ap
 
 `build:static` 产物是经典 IIFE 脚本（非 ES Module）+ 相对路径，**双击 `dist/index.html` 即可离线游玩**，不需要任何服务端，整个 `dist` 文件夹拷走就能跑。
 
+## 🌐 在线版（GitHub Pages）
+
+仓库已配置 GitHub Actions（`.github/workflows/deploy.yml`）：push 到 `main` 自动构建并部署到 GitHub Pages。
+首次使用需在仓库 **Settings → Pages → Source** 选择 **GitHub Actions**。
+
+线上地址：https://rink1969.github.io/fishing-game/
+
+> 提示：线上版是 HTTPS，连本地 LM Studio（`http://localhost:1234`）可能被浏览器混合内容策略拦截；本地双击 `dist/index.html` 没有此限制。也可以手动跑 `npm run deploy` 通过 `gh-pages` 分支发布。
+
+
 ## 🛠️ 技术栈
 
 React 19 + TypeScript + Vite + Tailwind CSS + Canvas 2D（自研游戏引擎，无游戏框架）
