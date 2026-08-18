@@ -65,8 +65,8 @@ export default function App() {
   }
 
   const getEnvString = () => {
-    const env = engineRef.current?.getEnv()
-    return env ? `${env.phase} ${env.clock}` : undefined
+    // 只传时段（清晨/黄昏/夜晚…），不传具体时刻，避免模型报时间
+    return engineRef.current?.getEnv()?.phase
   }
 
   const petSpeak = useCallback(async (trigger: Trigger, result?: CatchResult, isRecord?: boolean) => {

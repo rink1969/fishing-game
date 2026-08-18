@@ -149,33 +149,37 @@ export function cannedLine(trigger: Trigger, result?: CatchResult): string {
 }
 
 // ---------------- 大模型接入 ----------------
-const SYSTEM_PROMPT = `你是钓鱼小游戏里的氛围组宠物「鱼蛋」，一只圆滚滚的橘猫，漂浮在游戏画面右上角陪玩家钓鱼。
-你的职责：等待时闲聊解闷、玩梗吐槽、给玩家打气；钓到鱼时兴奋地大喊庆祝，可以点评鱼的大小和稀有度。
-风格：幽默、有梗、像个老朋友，偶尔自嘲或调侃玩家（比如等太久可以吐槽"空军"）。
-规则：说话永远简短口语化，一两句以内、最多40字；可以用emoji；绝对不要说教、不要列清单、不要客套废话。`
+const SYSTEM_PROMPT = `你是钓鱼小游戏里的氛围组宠物「鱼蛋」，一只圆滚滚的橘猫，漂浮在画面右上角陪玩家钓鱼。
+你的职责：等待时陪玩家解闷、提供情绪价值；钓到鱼时兴奋地大喊庆祝，可以点评鱼的大小和稀有度。
+风格：温暖、治愈、有梗但不损人；偶尔可以念一句应景的诗词（和钓鱼、山水、夕阳有关的，比如"孤舟蓑笠翁，独钓寒江雪"），或者单纯闲聊日常。
+规则（必须严格遵守）：
+- 只说一句话，最多25个字，越短越好，可以用emoji
+- 绝对不要报时间，不要提几点几分
+- 不要吐槽空军，不要调侃玩家钓不到鱼
+- 不要说教、不要列清单、不要客套废话`
 
 function buildPrompt(trigger: Trigger, ctx: SayContext): string {
   const env = ctx.env ? `现在是${ctx.env}。` : ''
   switch (trigger) {
     case 'idle': {
-      const wait = ctx.waitSeconds && ctx.waitSeconds > 30
-        ? `玩家这一杆已经等了 ${Math.round(ctx.waitSeconds)} 秒还没动静，可以调侃一下或者鼓励他坚持。`
-        : '玩家正在等鱼上钩，有点无聊。'
-      return `${env}${wait}随便闲聊一句、玩个梗或者给他打气，可以结合时间/天气/钓鱼佬的日常。`
+      const long = ctx.waitSeconds && ctx.waitSeconds > 40
+        ? '玩家这一杆等得有点久了。'
+        : '玩家正在悠闲等鱼上钩。'
+      return `${env}${long}说一句话陪玩家解闷：温柔的鼓励、一句应景的诗词、或者无厘头的闲聊都可以。不要报时间。`
     }
     case 'caught': {
       const r = ctx.result
       if (!r) return '玩家钓到鱼了！'
-      if (r.isJunk) return `${env}玩家钓上来一个【${r.junkName}】，不是鱼！吐槽一下，搞笑一点。`
+      if (r.isJunk) return `${env}玩家钓上来一个【${r.junkName}】，不是鱼！温柔地调侃一句，一句话就好。`
       const sp = r.species!
       const ratio = (r.weight - sp.minW) / (sp.maxW - sp.minW)
       const sizeNote = ratio > 0.8 ? '这条在同类里算是巨无霸！' : ratio < 0.2 ? '这条在同类里算迷你的小家伙。' : ''
       return `${env}玩家刚钓到一条 ${r.weight}kg 的【${sp.name}】（${rarityLabel(sp.rarity)}）！${sizeNote}${
         sp.rarity >= 4 ? '这是传说级的鱼！疯狂庆祝！' : sp.rarity >= 3 ? '这是稀有鱼！大声庆祝！' : '一起庆祝！'
-      }${ctx.isRecord ? '这是玩家的新纪录！' : ''}${ctx.stats ? `（玩家累计：${ctx.stats}）` : ''}说点有梗的庆祝词，可以点评这条鱼。`
+      }${ctx.isRecord ? '这是玩家的新纪录！' : ''}说一句话庆祝，可以点评这条鱼，不要报时间。`
     }
     default:
-      return '陪玩家钓鱼，随便说点什么活跃气氛。'
+      return '陪玩家钓鱼，说一句话活跃气氛，不要报时间。'
   }
 }
 
@@ -236,7 +240,7 @@ async function callLLM(config: LLMConfig, userPrompt: string, timeoutMs = 10000)
         : `模型返回为空（原始响应片段: ${JSON.stringify(data).slice(0, 160)}）`
       throw new Error(reason)
     }
-    return content.slice(0, 150)
+    return content.slice(0, 60) // 硬截断兜底：太长的回复容易被后续事件打断
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw new Error('请求超时（10 秒无响应）')
     if (e instanceof TypeError) throw new Error('网络错误或跨域（CORS）被拦截 —— 部分厂商不允许浏览器直连')
