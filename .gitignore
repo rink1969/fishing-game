@@ -25,3 +25,6 @@ dist-ssr
 
 # scaffold notes
 template-info.md
+
+# deploy temp
+.deploy-tmp
