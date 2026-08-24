@@ -8,6 +8,7 @@ import Pet, { type PetMessage } from './components/Pet'
 import SettingsPanel from './components/SettingsPanel'
 import { speak, stopSpeaking } from './pet/voice'
 import './pet/pet.css'
+import './tang.css'
 
 interface SaveData {
   count: number
@@ -286,12 +287,12 @@ export default function App() {
       <canvas ref={canvasRef} className="absolute inset-0" />
 
       {/* 左上：渔获统计 */}
-      <div data-ui className="absolute left-4 top-4 z-20 rounded-xl bg-black/40 px-4 py-2.5 text-white backdrop-blur">
-        <div className="text-[15px] font-bold">🎣 钓鱼大师</div>
-        <div className="mt-1 space-y-0.5 text-[13px] text-white/85">
-          <div>渔获：<b className="text-amber-300">{save.count}</b> 条 · 总长 <b className="text-amber-300">{save.totalWeight.toFixed(1)}</b> cm</div>
+      <div data-ui className="tang-panel absolute left-4 top-4 z-20 px-4 py-2.5">
+        <div className="tang-title-cream text-[17px]">🎣 钓鱼大师</div>
+        <div className="mt-1 space-y-0.5 text-[13px] text-[#f8efd8]/85">
+          <div>渔获：<b className="text-[#f0cb73]">{save.count}</b> 条 · 总长 <b className="text-[#f0cb73]">{save.totalWeight.toFixed(1)}</b> cm</div>
           {save.best && (
-            <div>最大：{save.best.name} <b className="text-amber-300">{save.best.weight}</b> cm</div>
+            <div>最大：{save.best.name} <b className="text-[#f0cb73]">{save.best.weight}</b> cm</div>
           )}
         </div>
       </div>
@@ -316,36 +317,39 @@ export default function App() {
 
       {/* 渔获卡片 */}
       {lastCatch && c && (
-        <div data-ui className="absolute inset-0 z-30 flex items-center justify-center bg-black/30" onClick={dismissCatch}>
+        <div data-ui className="tang-veil absolute inset-0 z-30 flex items-center justify-center" onClick={dismissCatch}>
           <div
-            className="catch-card w-[300px] rounded-2xl border border-amber-200/40 bg-stone-900/95 p-6 text-center text-white shadow-2xl"
+            className="catch-card tang-parchment w-[320px] p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             {c.isJunk ? (
               <>
                 <div className="text-5xl">{c.junkName === '破靴子' ? '🥾' : c.junkName === '易拉罐' ? '🥫' : c.junkName === '小虾米' ? '🦐' : '🌿'}</div>
-                <div className="mt-3 text-xl font-bold text-stone-300">钓上了……{c.junkName}？</div>
-                <div className="mt-1 text-sm text-stone-400">保护环境，人人有责 😅</div>
+                <div className="tang-title mt-3 text-xl">钓上了……{c.junkName}？</div>
+                <div className="mt-1 text-sm text-[#786c4b]">保护环境，人人有责 😅</div>
               </>
             ) : (
               <>
-                <div className="flex h-20 w-20 items-center justify-center">
+                <div className="tang-label">渔 获</div>
+                <div className="mx-auto flex h-24 w-24 items-center justify-center">
                   {c.species!.img ? (
-                    <img src={assetUrl(c.species!.img)} alt={c.species!.name} className="h-16 w-16 object-contain drop-shadow" />
+                    <img src={assetUrl(c.species!.img)} alt={c.species!.name} className="h-20 w-20 object-contain drop-shadow" />
                   ) : (
                     <span className="text-5xl">{c.species!.emoji}</span>
                   )}
                 </div>
-                <div className="mt-3 text-2xl font-bold" style={{ color: c.species!.color }}>
+                <div className="tang-title mt-1 text-3xl">
                   {c.species!.name}
                 </div>
-                <div className="mt-1 text-sm text-amber-300">
-                  {'★'.repeat(c.species!.rarity)} {rarityLabel(c.species!.rarity)}
+                <div className="mt-1.5">
+                  <span className="tang-chip-gold px-2.5 py-0.5 text-[12px]">
+                    {'★'.repeat(c.species!.rarity)} {rarityLabel(c.species!.rarity)}
+                  </span>
                 </div>
-                <div className="mt-2 text-3xl font-black text-amber-200">{c.weight} <span className="text-base font-medium">cm</span></div>
-                <div className="mt-1 text-sm text-amber-300">价值 {c.value} 灵玉 · 可在 🎒 渔篓卖出</div>
+                <div className="tang-title mt-2 text-4xl text-[#9b7133]">{c.weight} <span className="text-base font-medium">cm</span></div>
+                <div className="mt-1 text-sm text-[#786c4b]">价值 {c.value} 灵玉 · 可在 🎒 渔篓卖出</div>
                 {lastCatch.isRecord && (
-                  <div className="mt-2 inline-block rounded-full bg-amber-400/20 px-3 py-0.5 text-sm font-semibold text-amber-300">
+                  <div className="mt-2 inline-block rounded-full border border-[#a97f3d] bg-[#f3d489]/60 px-3 py-0.5 text-sm font-bold text-[#8a5a18]">
                     🏆 新纪录！
                   </div>
                 )}
@@ -353,7 +357,7 @@ export default function App() {
             )}
             <button
               onClick={dismissCatch}
-              className="mt-5 w-full rounded-xl bg-amber-400 py-2.5 font-bold text-stone-900 transition hover:bg-amber-300"
+              className="tang-btn-gold mt-5 w-full py-2.5 text-[15px]"
             >
               继续钓鱼 🎣
             </button>
@@ -385,7 +389,7 @@ export default function App() {
       />
 
       {toast && (
-        <div data-ui className="absolute bottom-20 left-1/2 z-40 -translate-x-1/2 rounded-xl bg-stone-900/95 px-4 py-2 text-[13px] text-amber-200 shadow-xl backdrop-blur">
+        <div data-ui className="tang-chip absolute bottom-20 left-1/2 z-40 -translate-x-1/2 px-4 py-2 text-[13px] text-[#f0cb73] shadow-xl">
           {toast}
         </div>
       )}

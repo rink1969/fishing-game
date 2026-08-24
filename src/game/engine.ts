@@ -993,7 +993,7 @@ export class FishingEngine {
     const hh = String(Math.floor(mins / 60)).padStart(2, '0')
     const mm = String(mins % 60).padStart(2, '0')
     ctx.font = '600 13px system-ui, sans-serif'
-    ctx.fillStyle = 'rgba(255,255,255,0.75)'
+    ctx.fillStyle = 'rgba(248,239,216,0.8)'
     ctx.textAlign = 'left'
     const duskNote = skyAt(this.dayT).dark > 0.4 ? ' · 夜晚稀有鱼活跃' : ''
     ctx.fillText(`🕐 ${hh}:${mm}${duskNote}`, 16, H - 16)
@@ -1001,7 +1001,7 @@ export class FishingEngine {
     ctx.textAlign = 'center'
     // 底部操作提示
     ctx.font = '500 15px system-ui, sans-serif'
-    ctx.fillStyle = 'rgba(255,255,255,0.85)'
+    ctx.fillStyle = 'rgba(248,239,216,0.92)'
     const hints: Partial<Record<GameState, string>> = {
       idle: '长按 鼠标/空格 蓄力，松开抛竿',
       waiting: this.nibbled ? '……好像有动静？' : '等待鱼儿上钩…',
@@ -1020,11 +1020,11 @@ export class FishingEngine {
       ctx.fillStyle = 'rgba(0,0,0,0.4)'
       ctx.fillRect(x - 2, y - 2, bw + 4, 16)
       const grad = ctx.createLinearGradient(x, 0, x + bw, 0)
-      grad.addColorStop(0, '#6fd66f')
-      grad.addColorStop(1, '#f5b83d')
+      grad.addColorStop(0, '#6aa191')
+      grad.addColorStop(1, '#e9c46a')
       ctx.fillStyle = grad
       ctx.fillRect(x, y, bw * this.charge, 12)
-      ctx.fillStyle = '#fff'
+      ctx.fillStyle = '#f8efd8'
       ctx.font = '600 13px system-ui, sans-serif'
       ctx.fillText('松开抛竿！', W / 2, y - 8)
     }
@@ -1052,24 +1052,24 @@ export class FishingEngine {
       ctx.fillStyle = 'rgba(0,0,0,0.45)'
       ctx.fillRect(x - 3, y - 3, bw + 6, 22)
       // 安全区
-      ctx.fillStyle = 'rgba(110,214,110,0.35)'
+      ctx.fillStyle = 'rgba(106,161,145,0.42)'
       ctx.fillRect(x + bw * 0.22, y, bw * (0.85 - 0.22), 16)
       // 危险区
-      ctx.fillStyle = 'rgba(255,80,60,0.35)'
+      ctx.fillStyle = 'rgba(192,91,77,0.45)'
       ctx.fillRect(x + bw * 0.85, y, bw * 0.15, 16)
       // 指针
       const tx = x + bw * clamp(this.tension, 0, 1)
-      ctx.fillStyle = this.tension > 0.85 ? '#ff5040' : this.tension < 0.22 ? '#f5d13d' : '#ffffff'
+      ctx.fillStyle = this.tension > 0.85 ? '#e05a4a' : this.tension < 0.22 ? '#e9c46a' : '#f8efd8'
       ctx.fillRect(tx - 3, y - 4, 6, 24)
       ctx.font = '600 12px system-ui, sans-serif'
-      ctx.fillStyle = 'rgba(255,255,255,0.8)'
+      ctx.fillStyle = 'rgba(248,239,216,0.85)'
       ctx.textAlign = 'left'
       ctx.fillText('张力', x, y - 8)
       // 收线进度
       const py = y - 26
       ctx.fillStyle = 'rgba(0,0,0,0.45)'
       ctx.fillRect(x - 3, py - 3, bw + 6, 12)
-      ctx.fillStyle = '#5ac8fa'
+      ctx.fillStyle = '#e9c46a'
       ctx.fillRect(x, py, bw * this.reelProgress, 6)
       ctx.textAlign = 'center'
     }

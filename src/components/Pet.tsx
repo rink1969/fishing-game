@@ -124,26 +124,28 @@ export default function Pet({ message, thinking, aiOn, voiceOn, onOpenSettings }
       {/* 设置 & AI 状态 */}
       <div className="flex items-center gap-2">
         <span
-          className={`rounded-full px-2 py-0.5 text-[11px] font-medium backdrop-blur ${
-            aiOn ? 'bg-emerald-500/80 text-white' : 'bg-black/40 text-white/80'
+          className={`rounded-full border px-2 py-0.5 text-[11px] font-medium backdrop-blur ${
+            aiOn
+              ? 'border-[#3d6a5e] bg-[#4e7f73]/85 text-[#fff7d5]'
+              : 'border-[#c9a86f]/60 bg-[#173337]/85 text-[#f8efd8]/85'
           }`}
         >
           {aiOn ? '🤖 AI 氛围组' : '📻 本地台词'}
         </span>
         <button
           onClick={onOpenSettings}
-          className="rounded-full bg-black/40 px-2.5 py-1 text-sm text-white backdrop-blur transition hover:bg-black/60"
+          className="tang-chip rounded-full px-2.5 py-1 text-sm transition hover:bg-[#173337]"
           title="设置"
         >
           ⚙️
         </button>
       </div>
 
-      {/* 气泡 */}
+      {/* 气泡（宣纸质感） */}
       {(bubble || thinking) && (
-        <div className="pet-bubble relative max-w-full rounded-2xl rounded-tr-sm border border-amber-200 bg-white/95 px-3 py-2 text-[13px] leading-snug text-stone-800 shadow-lg">
+        <div className="pet-bubble tang-parchment relative max-w-full !rounded-2xl !rounded-tr-sm !border-2 px-3 py-2 text-[13px] leading-snug">
           {thinking ? (
-            <span className="pet-dots text-stone-500">鱼蛋思考中</span>
+            <span className="pet-dots text-[#786c4b]">鱼蛋思考中</span>
           ) : (
             <>
               {bubble?.text}
@@ -157,7 +159,7 @@ export default function Pet({ message, thinking, aiOn, voiceOn, onOpenSettings }
               )}
             </>
           )}
-          <div className="absolute -right-1 top-3 h-3 w-3 rotate-45 border-r border-t border-amber-200 bg-white/95" />
+          <div className="absolute -right-[5px] top-3 h-3 w-3 rotate-45 border-r-2 border-t-2 border-[#8a6a45] bg-[#f1e4c8]" />
         </div>
       )}
 

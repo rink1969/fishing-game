@@ -1,0 +1,186 @@
+/* ============================================================
+   寻霖塘风格设计令牌与组件类
+   参考 rainholm-fish：国风水乡 + 宣纸卡片 + 深青金边面板 + 楷体
+   ============================================================ */
+
+:root {
+  --tang-teal: #173337;        /* 深青面板底 */
+  --tang-teal-deep: #0f2629;
+  --tang-gold: #c9a86f;        /* 金边 */
+  --tang-gold-bright: #f0cb73; /* 金色高光文字 */
+  --tang-cream: #f8efd8;       /* 深底上的米白文字 */
+  --tang-ink: #35483f;         /* 宣纸上的墨绿文字 */
+  --tang-ink-deep: #315e55;    /* 宣纸标题墨绿 */
+  --tang-wood: #8a6a45;        /* 宣纸棕边框 */
+  --tang-wood-soft: #9a8a5d;   /* 木牌边框 */
+  --tang-jade: #4e7f73;        /* 玉绿 */
+}
+
+/* ---------- 宣纸卡片（渔获卡/气泡） ---------- */
+.tang-parchment {
+  background:
+    radial-gradient(ellipse at 20% 10%, rgba(255, 250, 235, .9), transparent 60%),
+    linear-gradient(160deg, #f8f0dc, #f1e4c8 55%, #e9d8b6);
+  border: 3px solid var(--tang-wood);
+  border-radius: 1rem;
+  box-shadow:
+    0 10px 40px rgba(60, 40, 15, .35),
+    inset 0 0 40px rgba(180, 150, 100, .18);
+  color: var(--tang-ink);
+}
+
+/* ---------- 深青金边面板（HUD/弹窗） ---------- */
+.tang-panel {
+  background: linear-gradient(165deg, rgba(23, 51, 55, .94), rgba(15, 38, 41, .96));
+  border: 2px solid var(--tang-gold);
+  border-radius: 16px;
+  box-shadow:
+    0 12px 36px rgba(5, 18, 20, .5),
+    inset 0 0 0 1px rgba(255, 244, 204, .22);
+  color: var(--tang-cream);
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- 顶栏 pill ---------- */
+.tang-pill {
+  background: linear-gradient(165deg, rgba(23, 51, 55, .92), rgba(15, 38, 41, .94));
+  border: 1.5px solid var(--tang-gold);
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(5, 18, 20, .45), inset 0 0 0 1px rgba(255, 244, 204, .18);
+  color: var(--tang-cream);
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- 楷体标题 / 金色标签 ---------- */
+.tang-title {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: var(--tang-ink-deep);
+}
+.tang-title-cream {
+  font-family: "STKaiti", "KaiTi", serif;
+  font-weight: 900;
+  letter-spacing: .08em;
+  color: var(--tang-cream);
+  text-shadow: 0 2px 6px rgba(3, 14, 17, .8);
+}
+.tang-label {
+  color: var(--tang-gold-bright);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .18em;
+}
+
+/* ---------- 木牌按钮 ---------- */
+.tang-btn {
+  border: 2px solid var(--tang-wood-soft);
+  border-radius: 12px;
+  background: linear-gradient(165deg, rgba(255, 252, 229, .95), rgba(243, 231, 199, .95));
+  color: #394c43;
+  font-weight: 700;
+  box-shadow: 0 3px 0 rgba(135, 118, 71, .4);
+  transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+  cursor: pointer;
+}
+.tang-btn:hover {
+  background: linear-gradient(165deg, #fffdf0, #f6ecd2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 0 rgba(135, 118, 71, .4);
+}
+.tang-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 rgba(135, 118, 71, .4);
+}
+.tang-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ---------- 金色主按钮 ---------- */
+.tang-btn-gold {
+  border: 2px solid #a97f3d;
+  border-radius: 12px;
+  background: linear-gradient(165deg, #f3d489, #e3b85c 60%, #d9a848);
+  color: #4a3312;
+  font-weight: 800;
+  box-shadow: 0 3px 0 rgba(122, 86, 32, .55), 0 6px 18px rgba(5, 18, 20, .3);
+  transition: transform .15s ease, box-shadow .15s ease, filter .15s ease;
+  cursor: pointer;
+}
+.tang-btn-gold:hover { filter: brightness(1.06); transform: translateY(-1px); }
+.tang-btn-gold:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(122, 86, 32, .55); }
+.tang-btn-gold:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* ---------- 玉绿次按钮 ---------- */
+.tang-btn-jade {
+  border: 2px solid #3d6a5e;
+  border-radius: 12px;
+  background: linear-gradient(165deg, #6aa191, #4e7f73);
+  color: #fff7d5;
+  font-weight: 700;
+  box-shadow: 0 3px 0 rgba(45, 84, 74, .6);
+  transition: transform .15s ease, filter .15s ease;
+  cursor: pointer;
+}
+.tang-btn-jade:hover { filter: brightness(1.08); }
+.tang-btn-jade:active { transform: translateY(1px); box-shadow: 0 1px 0 rgba(45, 84, 74, .6); }
+
+/* ---------- 列表项（宣纸小条） ---------- */
+.tang-item {
+  border: 2px solid var(--tang-wood-soft);
+  border-radius: 14px;
+  background: rgba(255, 252, 229, .88);
+  color: #394c43;
+  box-shadow: 0 2px 0 rgba(135, 118, 71, .25);
+}
+
+/* ---------- 深底列表项 ---------- */
+.tang-item-dark {
+  border: 1.5px solid rgba(201, 168, 111, .4);
+  border-radius: 12px;
+  background: rgba(255, 244, 204, .06);
+}
+
+/* ---------- 输入框（宣纸） ---------- */
+.tang-input {
+  border: 2px solid var(--tang-wood-soft);
+  border-radius: 10px;
+  background: rgba(255, 252, 235, .92);
+  color: var(--tang-ink);
+  outline: none;
+  transition: border-color .15s ease;
+}
+.tang-input:focus { border-color: var(--tang-gold); }
+.tang-input::placeholder { color: rgba(53, 72, 63, .45); }
+
+/* ---------- 小徽章 ---------- */
+.tang-chip {
+  border: 1.5px solid var(--tang-gold);
+  border-radius: 999px;
+  background: rgba(23, 51, 55, .85);
+  color: var(--tang-cream);
+  backdrop-filter: blur(4px);
+}
+.tang-chip-gold {
+  border: 1.5px solid #a97f3d;
+  border-radius: 999px;
+  background: linear-gradient(165deg, #f3d489, #e3b85c);
+  color: #4a3312;
+  font-weight: 700;
+}
+
+/* ---------- 遮罩 ---------- */
+.tang-veil {
+  background: rgba(7, 24, 28, .62);
+  backdrop-filter: blur(4px);
+}
+
+/* ---------- 面板滚动条 ---------- */
+.tang-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #96bbaa transparent;
+}
+.tang-scroll::-webkit-scrollbar { width: 6px; }
+.tang-scroll::-webkit-scrollbar-thumb { background: #96bbaa; border-radius: 3px; }
