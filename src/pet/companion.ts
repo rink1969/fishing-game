@@ -159,7 +159,7 @@ const SYSTEM_PROMPT = `你是钓鱼小游戏里的氛围组宠物「鱼蛋」，
 - 不要说教、不要列清单、不要客套废话`
 
 function buildPrompt(trigger: Trigger, ctx: SayContext): string {
-  const env = ctx.env ? `现在是${ctx.env}。` : ''
+  const env = ctx.env ? `玩家当前${ctx.env}。` : ''
   switch (trigger) {
     case 'idle': {
       const long = ctx.waitSeconds && ctx.waitSeconds > 40

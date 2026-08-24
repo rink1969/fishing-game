@@ -141,38 +141,6 @@ class Sfx {
   tick() { this.tone(1200, 0.03, 'sine', 0.03) }
 }
 
-// ---------- 天空配色（按一天中的时刻插值） ----------
-interface SkyStop { t: number; top: string; mid: string; water: string; dark: number }
-const SKY: SkyStop[] = [
-  { t: 0.0, top: '#0b1030', mid: '#1c2450', water: '#101c33', dark: 1 },
-  { t: 0.2, top: '#0b1030', mid: '#1c2450', water: '#101c33', dark: 1 },
-  { t: 0.27, top: '#3a4a8a', mid: '#e88a5a', water: '#2c3a55', dark: 0.45 },
-  { t: 0.35, top: '#5ea8e0', mid: '#bfe3f5', water: '#2e6f8f', dark: 0 },
-  { t: 0.5, top: '#3f96e0', mid: '#aadcF2', water: '#2b7a9c', dark: 0 },
-  { t: 0.66, top: '#4a86d8', mid: '#c8e0ee', water: '#2c6e90', dark: 0.05 },
-  { t: 0.76, top: '#5a4a9a', mid: '#f59a52', water: '#3a3560', dark: 0.5 },
-  { t: 0.84, top: '#141a3c', mid: '#303a6a', water: '#142036', dark: 0.95 },
-  { t: 1.0, top: '#0b1030', mid: '#1c2450', water: '#101c33', dark: 1 },
-]
-function hexLerp(a: string, b: string, t: number): string {
-  const pa = [1, 3, 5].map((i) => parseInt(a.slice(i, i + 2), 16))
-  const pb = [1, 3, 5].map((i) => parseInt(b.slice(i, i + 2), 16))
-  return `rgb(${pa.map((v, i) => Math.round(lerp(v, pb[i], t))).join(',')})`
-}
-function skyAt(dayT: number): SkyStop & { topC: string; midC: string; waterC: string } {
-  let i = 0
-  while (i < SKY.length - 2 && dayT > SKY[i + 1].t) i++
-  const a = SKY[i], b = SKY[i + 1]
-  const t = clamp((dayT - a.t) / (b.t - a.t || 1), 0, 1)
-  return {
-    ...a,
-    topC: hexLerp(a.top, b.top, t),
-    midC: hexLerp(a.mid, b.mid, t),
-    waterC: hexLerp(a.water, b.water, t),
-    dark: lerp(a.dark, b.dark, t),
-  }
-}
-
 export class FishingEngine {
   onEvent: (e: EngineEvent) => void = () => {}
   state: GameState = 'idle'
@@ -221,7 +189,6 @@ export class FishingEngine {
   private leapT = 0
 
   // 环境
-  private dayT = 0.32 // 一天的时刻 0..1，开局上午
   private particles: Particle[] = []
   private ripples: Ripple[] = []
   private shadows: Shadow[] = []
@@ -294,15 +261,10 @@ export class FishingEngine {
   setBait(id: string) { this.baitId = id }
   getState() { return this.state }
   getStateTime() { return this.stateT }
-  /** 当前游戏内环境信息（供 AI 生成有梗台词） */
+  /** 当前游戏内环境信息（供 AI 生成有梗台词）：固定场景，报当前钓点 */
   getEnv() {
-    const mins = Math.floor(this.dayT * 24 * 60)
-    const hh = String(Math.floor(mins / 60)).padStart(2, '0')
-    const mm = String(mins % 60).padStart(2, '0')
-    const h = mins / 60
-    const phase =
-      h < 5 ? '凌晨' : h < 8 ? '清晨' : h < 11 ? '上午' : h < 13 ? '正午' : h < 17 ? '下午' : h < 19.5 ? '黄昏' : '夜晚'
-    return { clock: `${hh}:${mm}`, phase }
+    const name = LOCATION_BY_ID[this.locationId]?.name ?? ''
+    return { clock: '', phase: name ? `在钓点「${name}」` : '' }
   }
 
   // ---------------- 输入 ----------------
@@ -387,21 +349,19 @@ export class FishingEngine {
     this.onEvent({ type: 'cast' })
   }
 
-  private effWeight(f: FishDef, loc: LocationDef | undefined, bait: BaitDef | undefined, nightBonus: number): number {
+  private effWeight(f: FishDef, loc: LocationDef | undefined, bait: BaitDef | undefined): number {
     let w = RARITY_BASE[f.tier]
     for (const tag of f.tags) {
       w *= loc?.tagMult?.[tag] ?? 1
       w *= bait?.effects?.tagMult?.[tag] ?? 1
     }
     w *= bait?.effects?.rarityMult?.[f.rarity] ?? 1
-    if (f.tier >= 3) w *= nightBonus
     return w
   }
 
   private rollCatch(): CatchResult {
     const loc = LOCATION_BY_ID[this.locationId]
     const bait = BAIT_BY_ID[this.baitId]
-    const nightBonus = 1 + skyAt(this.dayT).dark * 3
     const junkChance = (loc?.junkChance ?? 0.1) * (bait?.effects?.junkMult ?? 1)
     if (Math.random() < junkChance) {
       return { species: null, junkName: JUNK_ITEMS[Math.floor(Math.random() * JUNK_ITEMS.length)], weight: 0, isJunk: true, value: 0 }
@@ -410,7 +370,7 @@ export class FishingEngine {
     if (pool.length === 0) {
       return { species: null, junkName: '水草团', weight: 0, isJunk: true, value: 0 }
     }
-    const weights = pool.map((f) => this.effWeight(f, loc, bait, nightBonus))
+    const weights = pool.map((f) => this.effWeight(f, loc, bait))
     const total = weights.reduce((a, b) => a + b, 0)
     let r = Math.random() * total
     let sp = pool[0]
@@ -472,8 +432,6 @@ export class FishingEngine {
     if (this.paused) return
     this.time += dt
     this.stateT += dt
-    // 游戏内一天 = 4 分钟
-    this.dayT = (this.dayT + dt / 240) % 1
     if (this.msgT > 0) this.msgT -= dt
     if (this.shake > 0) this.shake = Math.max(0, this.shake - dt * 20)
 
@@ -738,7 +696,6 @@ export class FishingEngine {
     if (this.shake > 0) {
       ctx.translate(rand(-this.shake, this.shake), rand(-this.shake, this.shake))
     }
-    const sky = skyAt(this.dayT)
     const locDef = LOCATION_BY_ID[this.locationId]
     // 直接以当前钓点解析背景图（不缓存一次性状态，每帧检查 complete，与鱼图一致）
     if (locDef?.bg) {
@@ -750,19 +707,13 @@ export class FishingEngine {
     const bgEl = this.bgImg
     const useBg = imgReady(bgEl)
     if (useBg) {
-      // 直接用钓点背景图，仅按昼夜轻度压暗
+      // 固定场景：直接用钓点背景图，不做任何压暗
       ctx.drawImage(bgEl, 0, 0, W, H)
-      if (sky.dark > 0) {
-        ctx.fillStyle = `rgba(5,10,30,${sky.dark * 0.5})`
-        ctx.fillRect(0, 0, W, H)
-      }
     } else {
-      // 无背景图的钓点：整屏单一渐变兜底（不再随时间变换、不划分天空/水面）
-      const top = hexLerp(locDef?.skyTop ?? '#1b2a4a', '#06090f', sky.dark * 0.85)
-      const water = hexLerp(locDef?.water ?? '#13314a', '#04080d', sky.dark * 0.75)
+      // 无背景图的钓点：整屏单一固定渐变兜底（不划分天空/水面）
       const g = ctx.createLinearGradient(0, 0, 0, H)
-      g.addColorStop(0, top)
-      g.addColorStop(1, water)
+      g.addColorStop(0, locDef?.skyTop ?? '#1b2a4a')
+      g.addColorStop(1, locDef?.water ?? '#13314a')
       ctx.fillStyle = g
       ctx.fillRect(-10, -10, W + 20, H + 20)
     } // end !useBg
@@ -988,17 +939,6 @@ export class FishingEngine {
     ctx.save()
     ctx.textAlign = 'center'
 
-    // 时钟（游戏内时间）
-    const mins = Math.floor(this.dayT * 24 * 60)
-    const hh = String(Math.floor(mins / 60)).padStart(2, '0')
-    const mm = String(mins % 60).padStart(2, '0')
-    ctx.font = '600 13px system-ui, sans-serif'
-    ctx.fillStyle = 'rgba(248,239,216,0.8)'
-    ctx.textAlign = 'left'
-    const duskNote = skyAt(this.dayT).dark > 0.4 ? ' · 夜晚稀有鱼活跃' : ''
-    ctx.fillText(`🕐 ${hh}:${mm}${duskNote}`, 16, H - 16)
-
-    ctx.textAlign = 'center'
     // 底部操作提示
     ctx.font = '500 15px system-ui, sans-serif'
     ctx.fillStyle = 'rgba(248,239,216,0.92)'
