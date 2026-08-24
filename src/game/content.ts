@@ -34,7 +34,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#1b2a4a',
     skyMid: '#3a5a8c',
     water: '#13314a',
-    bg: 'spots/mangrove_shoal.jpg',
+    bg: 'spots/spot_mangrove_shoal.jpg',
   },
   {
     id: 'whispering_mire',
@@ -46,7 +46,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#bfe3ff',
     skyMid: '#7fb8e6',
     water: '#2f6f86',
-    bg: 'spots/whispering_mire.jpg',
+    bg: 'spots/spot_whispering_mire.jpg',
   },
   {
     id: 'starry_delta',
@@ -58,7 +58,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#ffd9a8',
     skyMid: '#ff9e6b',
     water: '#c75b3a',
-    bg: 'spots/starry_delta.jpg',
+    bg: 'spots/spot_starry_delta.jpg',
   },
   {
     id: 'sunken_ruins',
@@ -70,7 +70,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#2a1f3d',
     skyMid: '#5b3a7a',
     water: '#241b3a',
-    bg: 'spots/sunken_ruins.jpg',
+    bg: 'spots/spot_sunken_ruins.jpg',
   },
   {
     id: 'geyser_falls',
@@ -82,7 +82,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#0e2a33',
     skyMid: '#1f6b73',
     water: '#0a3b44',
-    bg: 'spots/geyser_falls.jpg',
+    bg: 'spots/spot_geyser_falls.jpg',
   },
   {
     id: 'crystal_cave',
@@ -94,7 +94,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#1a2230',
     skyMid: '#3d4a5e',
     water: '#16222e',
-    bg: 'spots/crystal_cave.jpg',
+    bg: 'spots/spot_crystal_cave.jpg',
   },
   {
     id: 'moonlit_pond',
@@ -117,7 +117,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#e8f4ff',
     skyMid: '#bfd8ef',
     water: '#5a7fa6',
-    bg: 'spots/reed_river.jpg',
+    bg: 'spots/spot_reed_river.jpg',
   },
   {
     id: 'abyssal_trench',
@@ -129,7 +129,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#3a0d12',
     skyMid: '#7a1f1f',
     water: '#2a0a0a',
-    bg: 'spots/abyssal_trench.jpg',
+    bg: 'spots/spot_abyssal_trench.jpg',
   },
   {
     id: 'floating_lake',
@@ -141,7 +141,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#bcd8ff',
     skyMid: '#7fa8e6',
     water: '#3a6fae',
-    bg: 'spots/floating_lake.jpg',
+    bg: 'spots/spot_floating_lake.jpg',
   },
   {
     id: 'lava_spring',
@@ -153,7 +153,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#461a0a',
     skyMid: '#a8431a',
     water: '#5a1f0a',
-    bg: 'spots/lava_spring.jpg',
+    bg: 'spots/spot_lava_spring.jpg',
   },
 ]
 
