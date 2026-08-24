@@ -1,7 +1,8 @@
 // 设置面板：大模型配置 / 音效 / 图鉴 / 存档
 import { useState } from 'react'
 import { testConnection, type LLMConfig } from '../pet/companion'
-import { SPECIES, rarityLabel } from '../game/engine'
+import { rarityLabel } from '../game/engine'
+import { FISH } from '../game/content'
 
 interface Props {
   open: boolean
@@ -16,7 +17,7 @@ interface Props {
   onResetSave: () => void
 }
 
-const RARITY_STAR: Record<number, string> = { 1: '★', 2: '★★', 3: '★★★', 4: '★★★★' }
+const RARITY_STAR: Record<number, string> = { 1: '★', 2: '★★', 3: '★★★', 4: '★★★★', 5: '★★★★★', 6: '★★★★★★' }
 
 export default function SettingsPanel({
   open, config, muted, voiceOn, codex, onClose, onSave, onMute, onVoiceChange, onResetSave,
@@ -166,15 +167,15 @@ export default function SettingsPanel({
         <section className="mb-5 rounded-xl bg-white/5 p-4">
           <div className="mb-2 font-semibold">📖 鱼类图鉴</div>
           <div className="space-y-1.5">
-            {SPECIES.map((s) => {
-              const n = codex[s.id] ?? 0
+            {FISH.map((f) => {
+              const n = codex[f.id] ?? 0
               return (
-                <div key={s.id} className="flex items-center justify-between text-sm">
+                <div key={f.id} className="flex items-center justify-between text-sm">
                   <span className={n > 0 ? '' : 'opacity-40'}>
-                    {n > 0 ? `${s.emoji} ${s.name}` : '❓ ？？？'}
+                    {n > 0 ? f.name : '❓ ？？？'}
                   </span>
                   <span className="text-xs text-amber-300/90">
-                    {RARITY_STAR[s.rarity]} · {rarityLabel(s.rarity)}
+                    {RARITY_STAR[f.tier]} · {rarityLabel(f.tier)}
                     {n > 0 && <span className="ml-2 text-stone-400">×{n}</span>}
                   </span>
                 </div>

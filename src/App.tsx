@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FishingEngine, rarityLabel, type CatchResult, type EngineEvent } from './game/engine'
+import { FishingEngine, rarityLabel, assetUrl, type CatchResult, type EngineEvent } from './game/engine'
+import { loadEconomy, saveEconomy, buyBait, gotoLocation, sellAll, addCatch, consumeBait, baitCount, type EconomyState } from './game/economy'
+import { BAITS } from './game/content'
+import EconomyBar from './components/EconomyBar'
 import { companionSay, loadConfig, saveConfig, CANNED_ONLY, type LLMConfig, type PetMood, type Trigger } from './pet/companion'
 import Pet, { type PetMessage } from './components/Pet'
 import SettingsPanel from './components/SettingsPanel'
@@ -59,6 +62,44 @@ export default function App() {
   const msgId = useRef(0)
   const saySeq = useRef(0)
 
+  // ---------------- 经济层 ----------------
+  const [economy, setEconomy] = useState<EconomyState>(loadEconomy)
+  const economyRef = useRef(economy)
+  economyRef.current = economy
+  const [selectedBait, setSelectedBait] = useState<string>(
+    () => BAITS.find((b) => (economy.bait[b.id] ?? 0) > 0)?.id ?? BAITS[0].id,
+  )
+  const baitRef = useRef(selectedBait)
+  baitRef.current = selectedBait
+  const [toast, setToast] = useState<string | null>(null)
+  useEffect(() => { if (toast) { const t = window.setTimeout(() => setToast(null), 2600); return () => window.clearTimeout(t) } }, [toast])
+  useEffect(() => { saveEconomy(economy) }, [economy])
+  useEffect(() => { engineRef.current?.setLocation(economy.locationId) }, [economy.locationId])
+  useEffect(() => { engineRef.current?.setBait(selectedBait) }, [selectedBait])
+  // 当前饵用光时自动切到另一种有货的饵
+  useEffect(() => {
+    if (baitCount(economy, selectedBait) <= 0) {
+      const next = BAITS.find((b) => (economy.bait[b.id] ?? 0) > 0)
+      if (next) setSelectedBait(next.id)
+    }
+  }, [economy, selectedBait])
+
+  const handleBuy = (id: string, qty: number) => {
+    const { state, msg } = buyBait(economy, id, qty)
+    setEconomy(state)
+    setToast(msg)
+  }
+  const handleGoto = (id: string) => {
+    const { state, msg } = gotoLocation(economy, id)
+    setEconomy(state)
+    setToast(msg)
+  }
+  const handleSell = () => {
+    const { state, gained } = sellAll(economy)
+    setEconomy(state)
+    setToast(gained > 0 ? `卖出渔获，+${gained} 灵玉` : '渔篓里没有可卖的鱼')
+  }
+
   const speakLine = (text: string, mood: PetMood) => {
     if (!voiceOnRef.current) return
     speak(text, mood === 'celebrate' || mood === 'shock' ? 'excited' : mood === 'sad' ? 'sad' : 'cute')
@@ -112,11 +153,21 @@ export default function App() {
     if (!canvas) return
     const engine = new FishingEngine(canvas)
     engineRef.current = engine
+    engine.setLocation(economyRef.current.locationId)
+    engine.setBait(baitRef.current)
+    engine.beforeCast = () => {
+      if (baitCount(economyRef.current, baitRef.current) <= 0) {
+        setToast('没有鱼饵了，去 🛒 商店买一些吧')
+        return false
+      }
+      return true
+    }
 
     engine.onEvent = (e: EngineEvent) => {
       switch (e.type) {
         case 'cast':
           if (Math.random() < 0.5) void petSpeak('cast')
+          setEconomy((e) => consumeBait(e, baitRef.current))
           break
         case 'nibble':
           void petSpeak('nibble')
@@ -159,6 +210,9 @@ export default function App() {
             saveRef.current.count > 0 &&
             (!saveRef.current.best || r.weight > saveRef.current.best.weight)
           setLastCatch({ result: r, isRecord })
+          if (!r.isJunk && r.species) {
+            setEconomy((e) => addCatch(e, r.species!.id, r.weight, r.value))
+          }
           void petSpeak('caught', r, isRecord)
           break
         }
@@ -235,9 +289,9 @@ export default function App() {
       <div data-ui className="absolute left-4 top-4 z-20 rounded-xl bg-black/40 px-4 py-2.5 text-white backdrop-blur">
         <div className="text-[15px] font-bold">🎣 钓鱼大师</div>
         <div className="mt-1 space-y-0.5 text-[13px] text-white/85">
-          <div>渔获：<b className="text-amber-300">{save.count}</b> 条 · 总重 <b className="text-amber-300">{save.totalWeight.toFixed(1)}</b> kg</div>
+          <div>渔获：<b className="text-amber-300">{save.count}</b> 条 · 总长 <b className="text-amber-300">{save.totalWeight.toFixed(1)}</b> cm</div>
           {save.best && (
-            <div>最大：{save.best.name} <b className="text-amber-300">{save.best.weight}</b> kg</div>
+            <div>最大：{save.best.name} <b className="text-amber-300">{save.best.weight}</b> cm</div>
           )}
         </div>
       </div>
@@ -275,14 +329,21 @@ export default function App() {
               </>
             ) : (
               <>
-                <div className="text-5xl">{c.species!.emoji}</div>
+                <div className="flex h-20 w-20 items-center justify-center">
+                  {c.species!.img ? (
+                    <img src={assetUrl(c.species!.img)} alt={c.species!.name} className="h-16 w-16 object-contain drop-shadow" />
+                  ) : (
+                    <span className="text-5xl">{c.species!.emoji}</span>
+                  )}
+                </div>
                 <div className="mt-3 text-2xl font-bold" style={{ color: c.species!.color }}>
                   {c.species!.name}
                 </div>
                 <div className="mt-1 text-sm text-amber-300">
                   {'★'.repeat(c.species!.rarity)} {rarityLabel(c.species!.rarity)}
                 </div>
-                <div className="mt-2 text-3xl font-black text-amber-200">{c.weight} <span className="text-base font-medium">kg</span></div>
+                <div className="mt-2 text-3xl font-black text-amber-200">{c.weight} <span className="text-base font-medium">cm</span></div>
+                <div className="mt-1 text-sm text-amber-300">价值 {c.value} 灵玉 · 可在 🎒 渔篓卖出</div>
                 {lastCatch.isRecord && (
                   <div className="mt-2 inline-block rounded-full bg-amber-400/20 px-3 py-0.5 text-sm font-semibold text-amber-300">
                     🏆 新纪录！
@@ -313,6 +374,21 @@ export default function App() {
         onVoiceChange={toggleVoice}
         onResetSave={resetSave}
       />
+
+      <EconomyBar
+        economy={economy}
+        selectedBait={selectedBait}
+        onSelectBait={setSelectedBait}
+        onBuy={handleBuy}
+        onGoto={handleGoto}
+        onSell={handleSell}
+      />
+
+      {toast && (
+        <div data-ui className="absolute bottom-20 left-1/2 z-40 -translate-x-1/2 rounded-xl bg-stone-900/95 px-4 py-2 text-[13px] text-amber-200 shadow-xl backdrop-blur">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }

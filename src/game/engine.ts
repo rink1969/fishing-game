@@ -4,6 +4,28 @@
 //         → leaping → result → idle
 // ============================================================
 
+import { FISH, LOCATIONS, LOCATION_BY_ID, BAIT_BY_ID, JUNK_ITEMS, FIGHT_BY_RARITY, type FishDef, type LocationDef, type BaitDef } from './content'
+
+const TIER_EMOJI: Record<number, string> = { 1: '🐟', 2: '🐠', 3: '🐡', 4: '🦈', 5: '👑', 6: '🌟' }
+const RARITY_BASE: Record<number, number> = { 1: 1000, 2: 350, 3: 90, 4: 22, 5: 5, 6: 1 }
+
+/** 资源路径统一走相对路径（base 是 './'），兼容 dev / file:// 双击 / GitHub Pages 子路径 */
+export function assetUrl(p: string): string {
+  const base = import.meta.env.BASE_URL || './'
+  return `${base}assets/${p}`
+}
+
+const fishImgCache = new Map<string, HTMLImageElement>()
+function getFishImg(url: string): HTMLImageElement {
+  let el = fishImgCache.get(url)
+  if (!el) { el = new Image(); el.src = url; fishImgCache.set(url, el) }
+  return el
+}
+/** 图片真正可用：加载完成且没挂（404 时 complete 也是 true，必须再看 naturalWidth） */
+function imgReady(el: HTMLImageElement | null): el is HTMLImageElement {
+  return !!el && el.complete && el.naturalWidth > 0
+}
+
 export type GameState =
   | 'idle'
   | 'charging'
@@ -20,17 +42,20 @@ export interface FishSpecies {
   emoji: string
   minW: number
   maxW: number
-  rarity: 1 | 2 | 3 | 4 // 1普通 2少见 3稀有 4传说
+  rarity: number // 1普通 2少见 3稀有 4史诗 5传说 6神话
   fight: number // 挣扎强度
   color: string
   chance: number // 基础权重
+  tier: number
+  img?: string
 }
 
 export interface CatchResult {
   species: FishSpecies | null
   junkName: string | null
-  weight: number // kg，junk 为 0
+  weight: number // 长度(cm)，junk 为 0
   isJunk: boolean
+  value: number // 售价(灵玉)
 }
 
 export type EngineEvent =
@@ -44,19 +69,11 @@ export type EngineEvent =
   | { type: 'caught'; result: CatchResult }
   | { type: 'statechange'; state: GameState }
 
-export const SPECIES: FishSpecies[] = [
-  { id: 'crucian', name: '小鲫鱼', emoji: '🐟', minW: 0.1, maxW: 0.7, rarity: 1, fight: 0.65, color: '#9fb2c4', chance: 38 },
-  { id: 'carp', name: '大鲤鱼', emoji: '🐠', minW: 0.6, maxW: 2.4, rarity: 1, fight: 1.0, color: '#c8843c', chance: 26 },
-  { id: 'grass', name: '草鱼', emoji: '🐡', minW: 1.0, maxW: 4.2, rarity: 2, fight: 1.25, color: '#7d9b6a', chance: 14 },
-  { id: 'bass', name: '鲈鱼', emoji: '🦈', minW: 0.8, maxW: 3.0, rarity: 2, fight: 1.35, color: '#5f7d9c', chance: 10 },
-  { id: 'catfish', name: '鲶鱼', emoji: '😾', minW: 1.5, maxW: 6.0, rarity: 3, fight: 1.5, color: '#4a4a58', chance: 5 },
-  { id: 'koi', name: '锦鲤', emoji: '🎏', minW: 0.5, maxW: 1.8, rarity: 3, fight: 1.1, color: '#e06c5a', chance: 4 },
-  { id: 'golden', name: '黄金鲤', emoji: '👑', minW: 2.0, maxW: 5.5, rarity: 4, fight: 1.8, color: '#e8b830', chance: 1.2 },
-]
+// 鱼种数据已迁移至 ./content.ts（FISH），按地点 + 饵加权抽取。
 
-export const JUNK_ITEMS = ['破靴子', '水草团', '小虾米', '易拉罐', '烂渔网']
+// JUNK_ITEMS 现从 ./content 导入
 
-const RARITY_LABEL: Record<number, string> = { 1: '普通', 2: '少见', 3: '稀有', 4: '传说' }
+const RARITY_LABEL: Record<number, string> = { 1: '普通', 2: '少见', 3: '稀有', 4: '史诗', 5: '传说', 6: '神话' }
 export function rarityLabel(r: number) {
   return RARITY_LABEL[r] ?? '普通'
 }
@@ -216,6 +233,12 @@ export class FishingEngine {
   private ro: ResizeObserver | null = null
   private detachInput: (() => void) | null = null
 
+  // 经济层（由 App 注入）：当前地点 / 饵 / 抛竿闸门 / 地点背景
+  private locationId = 'moonlit_pond'
+  private baitId = 'basic_worm'
+  beforeCast: () => boolean = () => true
+  private bgImg: HTMLImageElement | null = null
+
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     const ctx = canvas.getContext('2d')
@@ -229,9 +252,18 @@ export class FishingEngine {
   }
 
   // ---------------- 生命周期 ----------------
+  private preloadFish() {
+    for (const f of FISH) {
+      if (f.img) getFishImg(assetUrl(f.img))
+    }
+    for (const l of LOCATIONS) {
+      if (l.bg) getFishImg(assetUrl(l.bg))
+    }
+  }
   start() {
     if (this.running) return
     this.running = true
+    this.preloadFish()
     this.lastTs = performance.now()
     const loop = (ts: number) => {
       if (!this.running) return
@@ -254,6 +286,12 @@ export class FishingEngine {
   setMuted(m: boolean) { this.sfx.muted = m }
   /** 暂停/恢复（设置面板打开时用）：冻结状态机并屏蔽输入，画面保持最后一帧 */
   setPaused(p: boolean) { this.paused = p }
+  setLocation(id: string) {
+    this.locationId = id
+    const loc = LOCATION_BY_ID[id]
+    this.bgImg = loc?.bg ? getFishImg(assetUrl(loc.bg)) : null
+  }
+  setBait(id: string) { this.baitId = id }
   getState() { return this.state }
   getStateTime() { return this.stateT }
   /** 当前游戏内环境信息（供 AI 生成有梗台词） */
@@ -277,6 +315,7 @@ export class FishingEngine {
     }
     const up = (e: Event) => {
       if (e instanceof KeyboardEvent && e.code !== 'Space') return
+      if ((e.target as HTMLElement | null)?.closest('[data-ui]')) return
       this.release()
     }
     window.addEventListener('pointerdown', down)
@@ -294,6 +333,7 @@ export class FishingEngine {
   press() {
     if (this.paused) return
     if (this.pressed) return
+    if (this.state === 'idle' && !this.beforeCast()) return
     this.pressed = true
     switch (this.state) {
       case 'idle':
@@ -347,23 +387,58 @@ export class FishingEngine {
     this.onEvent({ type: 'cast' })
   }
 
-  private rollCatch(): CatchResult {
-    // 黄昏和夜晚稀有鱼概率提升
-    const nightBonus = 1 + skyAt(this.dayT).dark * 3
-    if (Math.random() < 0.1) {
-      return { species: null, junkName: JUNK_ITEMS[Math.floor(Math.random() * JUNK_ITEMS.length)], weight: 0, isJunk: true }
+  private effWeight(f: FishDef, loc: LocationDef | undefined, bait: BaitDef | undefined, nightBonus: number): number {
+    let w = RARITY_BASE[f.tier]
+    for (const tag of f.tags) {
+      w *= loc?.tagMult?.[tag] ?? 1
+      w *= bait?.effects?.tagMult?.[tag] ?? 1
     }
-    const pool = SPECIES.map((s) => ({
-      s,
-      w: s.chance * (s.rarity >= 3 ? nightBonus : 1),
-    }))
-    const total = pool.reduce((a, b) => a + b.w, 0)
+    w *= bait?.effects?.rarityMult?.[f.rarity] ?? 1
+    if (f.tier >= 3) w *= nightBonus
+    return w
+  }
+
+  private rollCatch(): CatchResult {
+    const loc = LOCATION_BY_ID[this.locationId]
+    const bait = BAIT_BY_ID[this.baitId]
+    const nightBonus = 1 + skyAt(this.dayT).dark * 3
+    const junkChance = (loc?.junkChance ?? 0.1) * (bait?.effects?.junkMult ?? 1)
+    if (Math.random() < junkChance) {
+      return { species: null, junkName: JUNK_ITEMS[Math.floor(Math.random() * JUNK_ITEMS.length)], weight: 0, isJunk: true, value: 0 }
+    }
+    const pool = FISH.filter((f) => f.locations.includes('all') || f.locations.includes(this.locationId))
+    if (pool.length === 0) {
+      return { species: null, junkName: '水草团', weight: 0, isJunk: true, value: 0 }
+    }
+    const weights = pool.map((f) => this.effWeight(f, loc, bait, nightBonus))
+    const total = weights.reduce((a, b) => a + b, 0)
     let r = Math.random() * total
-    let sp = pool[0].s
-    for (const p of pool) { r -= p.w; if (r <= 0) { sp = p.s; break } }
-    const skew = sp.rarity >= 3 ? Math.random() * Math.random() : Math.random() ** 2
-    const weight = Math.round((sp.minW + (sp.maxW - sp.minW) * skew) * 100) / 100
-    return { species: sp, junkName: null, weight, isJunk: false }
+    let sp = pool[0]
+    for (let i = 0; i < pool.length; i++) {
+      r -= weights[i]
+      if (r <= 0) { sp = pool[i]; break }
+    }
+    const skew = sp.tier >= 3 ? Math.random() * Math.random() : Math.random() ** 2
+    const size = Math.round((sp.minW + (sp.maxW - sp.minW) * skew) * 100) / 100
+    return {
+      species: {
+        id: sp.id,
+        name: sp.name,
+        emoji: TIER_EMOJI[sp.tier] ?? '🐟',
+        minW: sp.minW,
+        maxW: sp.maxW,
+        rarity: sp.tier,
+        fight: FIGHT_BY_RARITY[sp.rarity] ?? 0.8,
+        color: sp.color,
+        chance: 1,
+        tier: sp.tier,
+        img: sp.img,
+      },
+      junkName: null,
+      weight: size,
+      isJunk: false,
+      value: sp.value,
+    }
   }
 
   private tryHook() {
@@ -664,102 +739,33 @@ export class FishingEngine {
       ctx.translate(rand(-this.shake, this.shake), rand(-this.shake, this.shake))
     }
     const sky = skyAt(this.dayT)
-
-    // 天空
-    const g = ctx.createLinearGradient(0, 0, 0, this.horizonY)
-    g.addColorStop(0, sky.topC)
-    g.addColorStop(1, sky.midC)
-    ctx.fillStyle = g
-    ctx.fillRect(-10, -10, W + 20, this.horizonY + 12)
-
-    // 星星
-    if (sky.dark > 0.4) {
-      ctx.save()
-      ctx.globalAlpha = (sky.dark - 0.4) * 1.4
-      ctx.fillStyle = '#ffffff'
-      for (let i = 0; i < 60; i++) {
-        const sx = ((i * 137.5) % 100) / 100 * W
-        const sy = ((i * 89.3) % 100) / 100 * this.horizonY * 0.8
-        const tw = 0.5 + 0.5 * Math.sin(this.time * 2 + i)
-        ctx.globalAlpha = (sky.dark - 0.4) * 1.4 * tw
-        ctx.fillRect(sx, sy, 2, 2)
-      }
-      ctx.restore()
-    }
-
-    // 太阳 / 月亮沿弧线
-    const sunA = Math.PI * (1 - this.dayT) // 0.25→清晨左 …
-    const sunX = W * 0.5 + Math.cos(sunA) * W * 0.42
-    const sunY = this.horizonY - Math.sin(sunA) * H * 0.34
-    if (sky.dark < 0.7) {
-      const sg = ctx.createRadialGradient(sunX, sunY, 4, sunX, sunY, 60)
-      sg.addColorStop(0, 'rgba(255,240,180,0.95)')
-      sg.addColorStop(1, 'rgba(255,240,180,0)')
-      ctx.fillStyle = sg
-      ctx.fillRect(sunX - 60, sunY - 60, 120, 120)
-      ctx.fillStyle = '#ffdf8a'
-      ctx.beginPath(); ctx.arc(sunX, sunY, 18, 0, Math.PI * 2); ctx.fill()
+    const locDef = LOCATION_BY_ID[this.locationId]
+    // 直接以当前钓点解析背景图（不缓存一次性状态，每帧检查 complete，与鱼图一致）
+    if (locDef?.bg) {
+      const want = getFishImg(assetUrl(locDef.bg))
+      if (want !== this.bgImg) this.bgImg = want
     } else {
-      ctx.fillStyle = '#e8ecf5'
-      ctx.beginPath(); ctx.arc(W * 0.78, H * 0.12, 16, 0, Math.PI * 2); ctx.fill()
-      ctx.fillStyle = sky.topC
-      ctx.beginPath(); ctx.arc(W * 0.78 - 7, H * 0.12 - 4, 13, 0, Math.PI * 2); ctx.fill()
+      this.bgImg = null
     }
-
-    // 云
-    ctx.save()
-    ctx.globalAlpha = 0.75 - sky.dark * 0.5
-    ctx.fillStyle = sky.dark > 0.5 ? '#3a4470' : '#ffffff'
-    for (const c of this.clouds) {
-      const cx = c.x * W
-      const cy = c.y * H
-      const s = c.s
-      ctx.beginPath()
-      ctx.ellipse(cx, cy, 46 * s, 13 * s, 0, 0, Math.PI * 2)
-      ctx.ellipse(cx - 30 * s, cy + 5 * s, 26 * s, 9 * s, 0, 0, Math.PI * 2)
-      ctx.ellipse(cx + 32 * s, cy + 4 * s, 28 * s, 10 * s, 0, 0, Math.PI * 2)
-      ctx.fill()
-    }
-    ctx.restore()
-
-    // 远山/树林剪影
-    ctx.fillStyle = hexLerp('#2e5d43', '#0c1428', sky.dark)
-    ctx.beginPath()
-    ctx.moveTo(-10, this.horizonY + 2)
-    for (let x = -10; x <= W + 10; x += 24) {
-      const y = this.horizonY - 14 - Math.sin(x * 0.011 + 2) * 16 - Math.sin(x * 0.031) * 8
-      ctx.lineTo(x, y)
-    }
-    ctx.lineTo(W + 10, this.horizonY + 2)
-    ctx.closePath()
-    ctx.fill()
-
-    // 水面
-    const wg = ctx.createLinearGradient(0, this.horizonY, 0, H)
-    wg.addColorStop(0, sky.waterC)
-    wg.addColorStop(1, hexLerp('#0d2836', '#060d18', sky.dark))
-    ctx.fillStyle = wg
-    ctx.fillRect(-10, this.horizonY, W + 20, H - this.horizonY + 10)
-
-    // 波光
-    ctx.save()
-    for (let i = 0; i < 26; i++) {
-      const depth = i / 26
-      const y = lerp(this.horizonY + 6, H * 0.97, depth ** 1.4)
-      const amp = lerp(2, 9, depth)
-      const segW = lerp(14, 90, depth)
-      ctx.globalAlpha = lerp(0.05, 0.16, depth) * (1 - sky.dark * 0.6)
-      ctx.strokeStyle = '#cfeaf5'
-      ctx.lineWidth = lerp(1, 2.5, depth)
-      ctx.beginPath()
-      for (let x = -20; x < W + 20; x += segW * 2.4) {
-        const ox = Math.sin(this.time * 1.4 + i * 1.7 + x * 0.01) * amp
-        ctx.moveTo(x + ox, y + Math.sin(this.time * 2 + x * 0.02 + i) * amp * 0.4)
-        ctx.lineTo(x + segW + ox, y + Math.sin(this.time * 2 + (x + segW) * 0.02 + i) * amp * 0.4)
+    const bgEl = this.bgImg
+    const useBg = imgReady(bgEl)
+    if (useBg) {
+      // 直接用钓点背景图，仅按昼夜轻度压暗
+      ctx.drawImage(bgEl, 0, 0, W, H)
+      if (sky.dark > 0) {
+        ctx.fillStyle = `rgba(5,10,30,${sky.dark * 0.5})`
+        ctx.fillRect(0, 0, W, H)
       }
-      ctx.stroke()
-    }
-    ctx.restore()
+    } else {
+      // 无背景图的钓点：整屏单一渐变兜底（不再随时间变换、不划分天空/水面）
+      const top = hexLerp(locDef?.skyTop ?? '#1b2a4a', '#06090f', sky.dark * 0.85)
+      const water = hexLerp(locDef?.water ?? '#13314a', '#04080d', sky.dark * 0.75)
+      const g = ctx.createLinearGradient(0, 0, 0, H)
+      g.addColorStop(0, top)
+      g.addColorStop(1, water)
+      ctx.fillStyle = g
+      ctx.fillRect(-10, -10, W + 20, H + 20)
+    } // end !useBg
 
     // 鱼影
     for (const s of this.shadows) {
@@ -929,7 +935,18 @@ export class FishingEngine {
       ctx.fillText(emoji, 0, 0)
       ctx.restore()
     } else if (c.species) {
-      this.drawFish(x, y, s, rot, c.species.color)
+      const url = c.species.img ? assetUrl(c.species.img) : null
+      const el = url ? getFishImg(url) : null
+      if (el && imgReady(el)) {
+        ctx.save()
+        ctx.translate(x, y)
+        ctx.rotate(rot)
+        ctx.scale(s, s)
+        ctx.drawImage(el, -22, -11, 44, 22)
+        ctx.restore()
+      } else {
+        this.drawFish(x, y, s, rot, c.species.color)
+      }
     }
     if (Math.random() < 0.3) this.spawnSplash(x, y + 20 * s, 1, 0.3)
   }
