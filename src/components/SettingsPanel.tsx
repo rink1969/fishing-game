@@ -1,7 +1,7 @@
 // 设置面板：大模型配置 / 音效 / 图鉴 / 存档（寻霖塘国风皮肤）
 import { useState } from 'react'
 import { testConnection, type LLMConfig } from '../pet/companion'
-import { rarityLabel } from '../game/engine'
+import { rarityLabel, formatWeight } from '../game/engine'
 import { FISH } from '../game/content'
 
 interface Props {
@@ -166,6 +166,11 @@ export default function SettingsPanel({
                 <div key={f.id} className="flex items-center justify-between text-sm text-[#f8efd8]/90">
                   <span className={n > 0 ? '' : 'opacity-40'}>
                     {n > 0 ? f.name : '❓ ？？？'}
+                    {n > 0 && (
+                      <span className="ml-2 text-[11px] text-[#f8efd8]/55">
+                        {formatWeight(f.minW)} ~ {formatWeight(f.maxW)}
+                      </span>
+                    )}
                   </span>
                   <span className="text-xs text-[#f0cb73]/90">
                     {RARITY_STAR[f.tier]} · {rarityLabel(f.tier)}
