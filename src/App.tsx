@@ -148,7 +148,6 @@ export default function App() {
     engineRef.current?.setPaused(false)
   }
   const restartGame = () => {
-    if (!window.confirm('确定要重新开始吗？渔获、图鉴、灵玉、鱼饵都会清空（AI 配置和已解锁钓点保留）！')) return
     const llmRaw = localStorage.getItem(CONFIG_KEY) // AI 配置（含开关）保留
     let unlocked: string[] | null = null
     let locationId: string | null = null
