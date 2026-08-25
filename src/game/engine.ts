@@ -21,6 +21,12 @@ function getFishImg(url: string): HTMLImageElement {
   if (!el) { el = new Image(); el.src = url; fishImgCache.set(url, el) }
   return el
 }
+
+/** 重量展示：不足 1 公斤用克，否则公斤 */
+export function formatWeight(kg: number): string {
+  if (kg < 1) return `${Math.round(kg * 1000)} g`
+  return `${kg.toFixed(kg < 10 ? 2 : 1)} kg`
+}
 /** 图片真正可用：加载完成且没挂（404 时 complete 也是 true，必须再看 naturalWidth） */
 function imgReady(el: HTMLImageElement | null): el is HTMLImageElement {
   return !!el && el.complete && el.naturalWidth > 0
@@ -53,7 +59,7 @@ export interface FishSpecies {
 export interface CatchResult {
   species: FishSpecies | null
   junkName: string | null
-  weight: number // 长度(cm)，junk 为 0
+  weight: number // 重量(kg)，junk 为 0
   isJunk: boolean
   value: number // 售价(灵玉)
 }
@@ -379,7 +385,7 @@ export class FishingEngine {
       if (r <= 0) { sp = pool[i]; break }
     }
     const skew = sp.tier >= 3 ? Math.random() * Math.random() : Math.random() ** 2
-    const size = Math.round((sp.minW + (sp.maxW - sp.minW) * skew) * 100) / 100
+    const size = Math.round((sp.minW + (sp.maxW - sp.minW) * skew) * 1000) / 1000
     return {
       species: {
         id: sp.id,

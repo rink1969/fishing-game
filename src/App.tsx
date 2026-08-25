@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { FishingEngine, rarityLabel, assetUrl, type CatchResult, type EngineEvent } from './game/engine'
+import { FishingEngine, rarityLabel, assetUrl, formatWeight, type CatchResult, type EngineEvent } from './game/engine'
 import { loadEconomy, saveEconomy, buyBait, gotoLocation, sellAll, addCatch, consumeBait, baitCount, type EconomyState } from './game/economy'
 import { BAITS } from './game/content'
 import EconomyBar from './components/EconomyBar'
@@ -128,7 +128,7 @@ export default function App() {
     const engine = engineRef.current
     const r = await companionSay(trigger, configRef.current, {
       result,
-      stats: `${sv.count} 条 / ${sv.totalWeight.toFixed(1)}kg${sv.best ? `，最大 ${sv.best.name} ${sv.best.weight}kg` : ''}`,
+      stats: `${sv.count} 条 / 总重 ${formatWeight(sv.totalWeight)}${sv.best ? `，最重 ${sv.best.name} ${formatWeight(sv.best.weight)}` : ''}`,
       env: getEnvString(),
       waitSeconds: engine?.getState() === 'waiting' ? engine.getStateTime() : undefined,
       isRecord,
@@ -290,9 +290,9 @@ export default function App() {
       <div data-ui className="tang-panel absolute left-4 top-4 z-20 px-4 py-2.5">
         <div className="tang-title-cream text-[17px]">🎣 钓鱼大师</div>
         <div className="mt-1 space-y-0.5 text-[13px] text-[#f8efd8]/85">
-          <div>渔获：<b className="text-[#f0cb73]">{save.count}</b> 条 · 总长 <b className="text-[#f0cb73]">{save.totalWeight.toFixed(1)}</b> cm</div>
+          <div>渔获：<b className="text-[#f0cb73]">{save.count}</b> 条 · 总重 <b className="text-[#f0cb73]">{formatWeight(save.totalWeight)}</b></div>
           {save.best && (
-            <div>最大：{save.best.name} <b className="text-[#f0cb73]">{save.best.weight}</b> cm</div>
+            <div>最重的：{save.best.name} <b className="text-[#f0cb73]">{formatWeight(save.best.weight)}</b></div>
           )}
         </div>
       </div>
@@ -346,7 +346,7 @@ export default function App() {
                     {'★'.repeat(c.species!.rarity)} {rarityLabel(c.species!.rarity)}
                   </span>
                 </div>
-                <div className="tang-title mt-2 text-4xl text-[#9b7133]">{c.weight} <span className="text-base font-medium">cm</span></div>
+                <div className="tang-title mt-2 text-4xl text-[#9b7133]">{formatWeight(c.weight)}</div>
                 <div className="mt-1 text-sm text-[#786c4b]">价值 {c.value} 灵玉 · 可在 🎒 渔篓卖出</div>
                 {lastCatch.isRecord && (
                   <div className="mt-2 inline-block rounded-full border border-[#a97f3d] bg-[#f3d489]/60 px-3 py-0.5 text-sm font-bold text-[#8a5a18]">
