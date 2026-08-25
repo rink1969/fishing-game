@@ -479,7 +479,11 @@ export default function App() {
 
             <div className="tang-item-dark mb-3 flex justify-between rounded-xl px-4 py-3 text-[13px] text-[#f8efd8]/85">
               <span>🪱 鱼饵消耗：<b className="text-[#f0cb73]">{session.casts}</b> 个</span>
-              <span>💰 剩余灵玉：<b className="text-[#f0cb73]">{economy.money}</b></span>
+              <span
+                title="当前灵玉 + 渔篓未售出渔获的价值（仅结算展示，不会真的卖出）"
+              >
+                💰 灵玉结算：<b className="text-[#f0cb73]">{economy.money + economy.bag.reduce((a, c) => a + c.value, 0)}</b>
+              </span>
             </div>
 
             {(homeLoading || homeSummary) && (
