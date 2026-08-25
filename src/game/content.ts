@@ -1,15 +1,6 @@
 // AUTO-GENERATED from rainholm-fish/server/engine.py (surface fish / locations / baits only).
 // Regenerate with: python scripts/gen-content.py
 
-export const RARITY: Record<string, { tier: number; label: string; color: string }> = {
-  'common': { tier: 1, label: '常见', color: '#9fb2c4' },
-  'uncommon': { tier: 2, label: '少见', color: '#7d9b6a' },
-  'rare': { tier: 3, label: '稀有', color: '#5f7d9c' },
-  'epic': { tier: 4, label: '史诗', color: '#c8843c' },
-  'legendary': { tier: 5, label: '传说', color: '#e8b830' },
-  'mythic': { tier: 6, label: '神话', color: '#e06c5a' },
-}
-
 export interface LocationDef {
   id: string
   name: string

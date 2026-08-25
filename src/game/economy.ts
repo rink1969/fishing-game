@@ -15,7 +15,6 @@ export interface EconomyState {
   unlocked: string[]
   bag: CatchInstance[]
   nextInst: number
-  lastReliefDate: string
 }
 
 const KEY = 'fishing-economy'
@@ -28,7 +27,6 @@ export const STARTER: EconomyState = {
   unlocked: ['moonlit_pond', 'reed_river'],
   bag: [],
   nextInst: 1,
-  lastReliefDate: '',
 }
 
 export function loadEconomy(): EconomyState {
@@ -51,14 +49,6 @@ export function saveEconomy(s: EconomyState) {
 
 export function baitCount(s: EconomyState, baitId: string): number {
   return s.bait[baitId] ?? 0
-}
-
-export function totalBait(s: EconomyState): number {
-  return Object.values(s.bait).reduce((a, b) => a + b, 0)
-}
-
-export function hasBait(s: EconomyState, baitId: string): boolean {
-  return baitCount(s, baitId) > 0
 }
 
 /** 买饵：扣钱、加库存。返回新状态与结果信息。 */
@@ -117,18 +107,3 @@ export function sellAll(s: EconomyState): { state: EconomyState; gained: number 
   return { state: { ...s, money: s.money + gained, bag: [] }, gained }
 }
 
-/** 破产救济：灵玉低于最便宜饵价且没有任何饵时，给一次小额（每日一次）。 */
-export function cheapestBaitCost(): number {
-  return Math.min(...Object.values(BAIT_BY_ID).map((b) => b.cost))
-}
-
-export function todayStr(): string {
-  const d = new Date()
-  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`
-}
-
-export function reliefIfBroke(s: EconomyState): { state: EconomyState; granted: number } {
-  if (totalBait(s) > 0 || s.money >= cheapestBaitCost()) return { state: s, granted: 0 }
-  if (s.lastReliefDate === todayStr()) return { state: s, granted: 0 }
-  return { state: { ...s, money: s.money + 50, lastReliefDate: todayStr() }, granted: 50 }
-}

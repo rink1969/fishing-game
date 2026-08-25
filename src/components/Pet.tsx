@@ -50,6 +50,7 @@ export default function Pet({ message, thinking, voiceOn }: Props) {
 
   useEffect(() => {
     if (!message) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- 气泡是有生命周期的本地状态，跟随 message prop 重置
     setBubble(message)
     window.clearTimeout(hideTimer.current)
     const stay = message.mood === 'celebrate' ? 6000 : 4500

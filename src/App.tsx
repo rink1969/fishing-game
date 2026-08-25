@@ -500,7 +500,7 @@ export default function App() {
             )}
 
             <button onClick={restartGame} className="tang-btn-gold w-full py-2.5 text-[15px]">
-              🔄 重新开始游戏（保留 AI 配置与钓点）
+              🔄 重新开始游戏
             </button>
             <button onClick={closeHome} className="tang-btn mt-2 w-full py-2 text-[13px]">
               继续钓鱼 🎣

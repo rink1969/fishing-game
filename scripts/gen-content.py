@@ -11,8 +11,6 @@ sys.path.insert(0, ENGINE_DIR)
 import engine as E
 
 TIER = {"common": 1, "uncommon": 2, "rare": 3, "epic": 4, "legendary": 5, "mythic": 6}
-RARITY_LABEL = {"common": "常见", "uncommon": "少见", "rare": "稀有", "epic": "史诗",
-                "legendary": "传说", "mythic": "神话"}
 RARITY_COLOR = {"common": "#9fb2c4", "uncommon": "#7d9b6a", "rare": "#5f7d9c",
                 "epic": "#c8843c", "legendary": "#e8b830", "mythic": "#e06c5a"}
 FIGHT = {"common": 0.7, "uncommon": 1.0, "rare": 1.25, "epic": 1.5, "legendary": 1.8, "mythic": 1.95}
@@ -25,12 +23,6 @@ def has_png(fid):
 def spot_bg(lid):
     return "spots/" + lid + ".jpg" if os.path.exists(os.path.join(SPOT_DIR, "spot_" + lid + ".jpg")) else None
 
-
-# ---- RARITY ----
-rarity_ts = "export const RARITY: Record<string, { tier: number; label: string; color: string }> = {\n"
-for k in E.RARITY:
-    rarity_ts += f'  {k!r}: {{ tier: {TIER[k]}, label: {RARITY_LABEL[k]!r}, color: {RARITY_COLOR[k]!r} }},\n'
-rarity_ts += "}\n\n"
 
 # ---- LOCATIONS ----
 # 每个钓点一套天空/水面基调色，作为无背景图时的兜底，保证切地点画面一定变化。
@@ -139,7 +131,7 @@ out = os.path.join(SRC, "content.ts")
 with open(out, "w", encoding="utf-8") as fh:
     fh.write("// AUTO-GENERATED from rainholm-fish/server/engine.py (surface fish / locations / baits only).\n"
              "// Regenerate with: python scripts/gen-content.py\n\n"
-             + rarity_ts + locations_ts + baits_ts + fish_ts)
+             + locations_ts + baits_ts + fish_ts)
 
 # also copy assets
 os.makedirs(os.path.join(ASSETS, "fish"), exist_ok=True)
