@@ -19,6 +19,7 @@ export interface EconomyState {
 }
 
 const KEY = 'fishing-economy'
+export const ECONOMY_KEY = KEY
 
 export const STARTER: EconomyState = {
   money: 200,

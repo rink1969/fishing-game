@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FishingEngine, rarityLabel, assetUrl, formatWeight, type CatchResult, type EngineEvent } from './game/engine'
-import { loadEconomy, saveEconomy, buyBait, gotoLocation, sellAll, addCatch, consumeBait, baitCount, type EconomyState } from './game/economy'
+import { loadEconomy, saveEconomy, buyBait, gotoLocation, sellAll, addCatch, consumeBait, baitCount, STARTER, ECONOMY_KEY, type EconomyState } from './game/economy'
 import { BAITS, FISH_BY_ID } from './game/content'
 import EconomyBar from './components/EconomyBar'
 import { companionSay, loadConfig, saveConfig, CANNED_ONLY, CONFIG_KEY, type LLMConfig, type PetMood, type Trigger } from './pet/companion'
@@ -148,10 +148,24 @@ export default function App() {
     engineRef.current?.setPaused(false)
   }
   const restartGame = () => {
-    if (!window.confirm('确定要重新开始吗？存档、图鉴、经济都会清空（AI 配置保留）！')) return
-    const llmRaw = localStorage.getItem(CONFIG_KEY) // AI 配置保留
+    if (!window.confirm('确定要重新开始吗？渔获、图鉴、灵玉、鱼饵都会清空（AI 配置和已解锁钓点保留）！')) return
+    const llmRaw = localStorage.getItem(CONFIG_KEY) // AI 配置（含开关）保留
+    let unlocked: string[] | null = null
+    let locationId: string | null = null
+    try {
+      const eco = JSON.parse(localStorage.getItem(ECONOMY_KEY) ?? 'null')
+      if (eco?.unlocked) unlocked = eco.unlocked // 已解锁钓点保留
+      if (eco?.locationId) locationId = eco.locationId
+    } catch { /* ignore */ }
     localStorage.clear()
     if (llmRaw) localStorage.setItem(CONFIG_KEY, llmRaw)
+    if (unlocked) {
+      localStorage.setItem(ECONOMY_KEY, JSON.stringify({
+        ...STARTER,
+        unlocked,
+        locationId: locationId && unlocked.includes(locationId) ? locationId : STARTER.locationId,
+      }))
+    }
     location.reload()
   }
 
@@ -483,7 +497,7 @@ export default function App() {
             )}
 
             <button onClick={restartGame} className="tang-btn-gold w-full py-2.5 text-[15px]">
-              🔄 重新开始游戏（保留 AI 配置）
+              🔄 重新开始游戏（保留 AI 配置与钓点）
             </button>
             <button onClick={closeHome} className="tang-btn mt-2 w-full py-2 text-[13px]">
               继续钓鱼 🎣
