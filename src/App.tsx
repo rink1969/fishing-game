@@ -193,7 +193,7 @@ export default function App() {
           setSave((prev) => {
             const next: SaveData = {
               count: r.isJunk ? prev.count : prev.count + 1,
-              totalWeight: r.isJunk ? prev.totalWeight : Math.round((prev.totalWeight + r.weight) * 100) / 100,
+              totalWeight: r.isJunk ? prev.totalWeight : Math.round((prev.totalWeight + r.weight) * 1000) / 1000,
               best:
                 !r.isJunk && (!prev.best || r.weight > prev.best.weight)
                   ? { name: r.species!.name, weight: r.weight }
