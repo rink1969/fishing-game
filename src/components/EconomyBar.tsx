@@ -11,6 +11,7 @@ interface Props {
   onBuy: (id: string, qty: number) => void
   onGoto: (id: string) => void
   onSell: () => void
+  onOpenSettings: () => void
 }
 
 type Panel = 'none' | 'loc' | 'shop' | 'bag'
@@ -32,7 +33,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   )
 }
 
-export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy, onGoto, onSell }: Props) {
+export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy, onGoto, onSell, onOpenSettings }: Props) {
   const [panel, setPanel] = useState<Panel>('none')
   const locName = LOCATIONS.find((l) => l.id === economy.locationId)?.name ?? economy.locationId
   const bagValue = economy.bag.reduce((a, c) => a + c.value, 0)
@@ -51,6 +52,7 @@ export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy,
 
       {/* 右侧竖直菜单 */}
       <div data-ui className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-end gap-2">
+        <button onClick={onOpenSettings} className="tang-btn w-[120px] px-3 py-2 text-[13px]">⚙️ 设置</button>
         <button onClick={() => setPanel('loc')} className="tang-btn w-[120px] px-3 py-2 text-[13px]">📍 钓点</button>
         <button onClick={() => setPanel('shop')} className="tang-btn w-[120px] px-3 py-2 text-[13px]">🛒 商店</button>
         <button onClick={() => setPanel('bag')} className="tang-btn relative w-[120px] px-3 py-2 text-[13px]">

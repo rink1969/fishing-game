@@ -301,9 +301,7 @@ export default function App() {
       <Pet
         message={petMsg}
         thinking={thinking}
-        aiOn={config.enabled && !!config.apiKey}
         voiceOn={voiceOn}
-        onOpenSettings={() => { setSettingsOpen(true) }}
       />
 
       {/* AI 调用失败提示 */}
@@ -386,6 +384,7 @@ export default function App() {
         onBuy={handleBuy}
         onGoto={handleGoto}
         onSell={handleSell}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
 
       {toast && (

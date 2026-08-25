@@ -14,9 +14,7 @@ export interface PetMessage {
 interface Props {
   message: PetMessage | null
   thinking: boolean
-  aiOn: boolean
   voiceOn: boolean
-  onOpenSettings: () => void
 }
 
 /** 戳一戳的本地反应 */
@@ -45,7 +43,7 @@ const THINKING_IMG = 'pet/read.png'
 const IDLE_POSES = ['pet/wave.png', 'pet/tea.png', 'pet/read.png', 'pet/sweep.png']
 const IDLE_ROTATE_MS = 9000
 
-export default function Pet({ message, thinking, aiOn, voiceOn, onOpenSettings }: Props) {
+export default function Pet({ message, thinking, voiceOn }: Props) {
   const [bubble, setBubble] = useState<PetMessage | null>(null)
   const [idleIdx, setIdleIdx] = useState(0)
   const hideTimer = useRef<number>(0)
@@ -80,26 +78,6 @@ export default function Pet({ message, thinking, aiOn, voiceOn, onOpenSettings }
 
   return (
     <div data-ui className="pointer-events-auto absolute right-4 top-4 z-20 flex w-[240px] flex-col items-end gap-2">
-      {/* 设置 & AI 状态 */}
-      <div className="flex items-center gap-2">
-        <span
-          className={`rounded-full border px-2 py-0.5 text-[11px] font-medium backdrop-blur ${
-            aiOn
-              ? 'border-[#3d6a5e] bg-[#4e7f73]/85 text-[#fff7d5]'
-              : 'border-[#c9a86f]/60 bg-[#173337]/85 text-[#f8efd8]/85'
-          }`}
-        >
-          {aiOn ? '🤖 AI 氛围组' : '📻 本地台词'}
-        </span>
-        <button
-          onClick={onOpenSettings}
-          className="tang-chip rounded-full px-2.5 py-1 text-sm transition hover:bg-[#173337]"
-          title="设置"
-        >
-          ⚙️
-        </button>
-      </div>
-
       {/* 气泡（宣纸质感） */}
       {(bubble || thinking) && (
         <div className="pet-bubble tang-parchment relative max-w-full !rounded-2xl !rounded-tr-sm !border-2 px-3 py-2 text-[13px] leading-snug">
@@ -137,7 +115,6 @@ export default function Pet({ message, thinking, aiOn, voiceOn, onOpenSettings }
         {mood === 'sleepy' && <span className="absolute -right-1 top-1 animate-pulse text-lg">💤</span>}
         {mood === 'celebrate' && <span className="absolute -left-2 -top-2 animate-bounce text-xl">🎉</span>}
       </button>
-      <div className="text-[11px] font-medium text-white/80 drop-shadow">鱼蛋 · 氛围组</div>
     </div>
   )
 }
