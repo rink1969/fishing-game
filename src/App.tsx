@@ -383,7 +383,7 @@ export default function App() {
 
       {/* AI 调用失败提示 */}
       {aiError && (
-        <div data-ui className="absolute right-4 top-[190px] z-20 w-[240px] rounded-xl border border-red-300/40 bg-red-950/85 px-3 py-2 text-[12px] leading-snug text-red-200 backdrop-blur">
+        <div data-ui className="absolute bottom-[170px] right-4 z-20 w-[240px] rounded-xl border border-red-300/40 bg-red-950/85 px-3 py-2 text-[12px] leading-snug text-red-200 backdrop-blur">
           ⚠️ AI 调用失败，本条用了本地台词：
           <div className="mt-1 break-all text-red-300/80">{aiError}</div>
           <div className="mt-1 text-white/60">点右上角 ⚙️ 检查配置或测试连接</div>

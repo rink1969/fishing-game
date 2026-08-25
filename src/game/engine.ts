@@ -527,7 +527,7 @@ export class FishingEngine {
         if (Math.random() < dt * 8) this.ripples.push({ x: bp.x, y: bp.y, r: 3, maxR: 40 * bp.scale, alpha: 1 })
         this.biteLeft -= dt
         if (this.biteLeft <= 0) {
-          this.showMsg('鱼跑了…饵被吃掉了')
+          this.showMsg('鱼跑了…')
           this.sfx.fail()
           this.bob.dip = 0
           this.onEvent({ type: 'missed' })

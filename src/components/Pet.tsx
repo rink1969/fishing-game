@@ -77,7 +77,7 @@ export default function Pet({ message, thinking, voiceOn }: Props) {
   }
 
   return (
-    <div data-ui className="pointer-events-auto absolute right-4 top-4 z-20 flex w-[240px] flex-col items-end gap-2">
+    <div data-ui className="pointer-events-auto absolute bottom-4 right-4 z-20 flex w-[240px] flex-col items-end gap-2">
       {/* 气泡（宣纸质感） */}
       {(bubble || thinking) && (
         <div className="pet-bubble tang-parchment relative max-w-full !rounded-2xl !rounded-tr-sm !border-2 px-3 py-2 text-[13px] leading-snug">
