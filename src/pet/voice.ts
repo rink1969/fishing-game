@@ -33,7 +33,7 @@ export function speak(text: string, mood: 'cute' | 'excited' | 'sad' = 'cute') {
   const u = new SpeechSynthesisUtterance(clean)
   if (zhVoice) u.voice = zhVoice
   u.lang = 'zh-CN'
-  // 橘猫人设：音调偏高、语速略快；兴奋时更高更快，难过时低下来
+  // 小象人设：音调偏高、语速略快；兴奋时更高更快，难过时低下来
   u.pitch = mood === 'excited' ? 1.7 : mood === 'sad' ? 1.1 : 1.45
   u.rate = mood === 'excited' ? 1.25 : mood === 'sad' ? 0.95 : 1.1
   u.volume = 1

@@ -1,7 +1,8 @@
-// 氛围组宠物「鱼蛋」：右上角圆滚滚橘猫，表情 + 气泡 + 闲聊
+// 氛围组宠物「鱼蛋」：右上角圆滚滚小象，姿态图 + 气泡 + 闲聊
 import { useEffect, useRef, useState } from 'react'
 import type { PetMood } from '../pet/companion'
 import { speak } from '../pet/voice'
+import { assetUrl } from '../game/engine'
 
 export interface PetMessage {
   id: number
@@ -20,83 +21,33 @@ interface Props {
 
 /** 戳一戳的本地反应 */
 const POKE_LINES = [
-  '喵？别戳我，专心看浮漂！',
+  '噗？别戳我，专心看浮漂！',
   '嘿嘿，好痒～',
   '放心，有鱼咬钩我会喊你的！',
-  '戳我也钓不上鱼啦😼',
-  '本喵正在帮你盯着水面呢！',
+  '戳我也钓不上鱼啦🐘',
+  '本象正在帮你盯着水面呢！',
 ]
 
-function PetFace({ mood }: { mood: PetMood }) {
-  // 眼睛
-  const eyes =
-    mood === 'sleepy' ? (
-      <>
-        <path d="M30 44 q5 4 10 0" stroke="#4a2c14" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <path d="M60 44 q5 4 10 0" stroke="#4a2c14" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      </>
-    ) : mood === 'shock' ? (
-      <>
-        <circle cx="35" cy="43" r="6" fill="#fff" stroke="#4a2c14" strokeWidth="2" />
-        <circle cx="65" cy="43" r="6" fill="#fff" stroke="#4a2c14" strokeWidth="2" />
-        <circle cx="35" cy="43" r="2.5" fill="#4a2c14" />
-        <circle cx="65" cy="43" r="2.5" fill="#4a2c14" />
-      </>
-    ) : mood === 'happy' || mood === 'celebrate' ? (
-      <>
-        <path d="M29 42 q6 -7 12 0" stroke="#4a2c14" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-        <path d="M59 42 q6 -7 12 0" stroke="#4a2c14" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-      </>
-    ) : (
-      <>
-        <circle className="pet-eye" cx="35" cy="43" r="4" fill="#4a2c14" />
-        <circle className="pet-eye" cx="65" cy="43" r="4" fill="#4a2c14" />
-      </>
-    )
-  // 嘴
-  const mouth =
-    mood === 'celebrate' ? (
-      <path d="M42 56 q8 12 16 0 z" fill="#c2522f" stroke="#4a2c14" strokeWidth="2" strokeLinejoin="round" />
-    ) : mood === 'shock' ? (
-      <circle cx="50" cy="59" r="5" fill="#c2522f" stroke="#4a2c14" strokeWidth="2" />
-    ) : mood === 'sad' ? (
-      <path d="M43 61 q7 -6 14 0" stroke="#4a2c14" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-    ) : (
-      <path d="M42 56 q4 5 8 1 q4 4 8 -1" stroke="#4a2c14" strokeWidth="2.5" fill="none" strokeLinecap="round" />
-    )
-
-  return (
-    <svg viewBox="0 0 100 90" className="h-full w-full">
-      {/* 耳朵 */}
-      <path d="M22 26 L14 6 L40 16 Z" fill="#f2a24c" stroke="#d9822b" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M78 26 L86 6 L60 16 Z" fill="#f2a24c" stroke="#d9822b" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M24 22 L19 10 L34 16 Z" fill="#f7c489" />
-      <path d="M76 22 L81 10 L66 16 Z" fill="#f7c489" />
-      {/* 头 */}
-      <ellipse cx="50" cy="50" rx="36" ry="32" fill="#f2a24c" stroke="#d9822b" strokeWidth="2.5" />
-      {/* 条纹 */}
-      <path d="M44 20 q6 5 12 0" stroke="#d9822b" strokeWidth="3" fill="none" strokeLinecap="round" />
-      <path d="M40 27 q10 6 20 0" stroke="#d9822b" strokeWidth="3" fill="none" strokeLinecap="round" />
-      {/* 腮红 */}
-      <ellipse cx="26" cy="54" rx="6" ry="3.5" fill="#f78d7a" opacity="0.7" />
-      <ellipse cx="74" cy="54" rx="6" ry="3.5" fill="#f78d7a" opacity="0.7" />
-      {eyes}
-      {/* 鼻子 */}
-      <path d="M47 51 h6 l-3 4 z" fill="#e06c5a" />
-      {mouth}
-      {/* 胡须 */}
-      <g stroke="#d9822b" strokeWidth="1.4" strokeLinecap="round" opacity="0.8">
-        <path d="M10 48 l-12 -2" />
-        <path d="M10 54 l-12 2" />
-        <path d="M90 48 l12 -2" />
-        <path d="M90 54 l12 2" />
-      </g>
-    </svg>
-  )
+/** 心情 → 姿态图 */
+const MOOD_IMG: Record<PetMood, string> = {
+  idle: 'pet/wave.png',
+  happy: 'pet/skip.png',
+  celebrate: 'pet/celebrate.png',
+  sleepy: 'pet/sleep.png',
+  shock: 'pet/shy.png',
+  sad: 'pet/tea.png',
 }
+
+/** 思考中（等 AI 回复）的姿态 */
+const THINKING_IMG = 'pet/read.png'
+
+/** 平时没事做轮播的悠闲姿态 */
+const IDLE_POSES = ['pet/wave.png', 'pet/tea.png', 'pet/read.png', 'pet/sweep.png']
+const IDLE_ROTATE_MS = 9000
 
 export default function Pet({ message, thinking, aiOn, voiceOn, onOpenSettings }: Props) {
   const [bubble, setBubble] = useState<PetMessage | null>(null)
+  const [idleIdx, setIdleIdx] = useState(0)
   const hideTimer = useRef<number>(0)
 
   useEffect(() => {
@@ -107,9 +58,17 @@ export default function Pet({ message, thinking, aiOn, voiceOn, onOpenSettings }
     hideTimer.current = window.setTimeout(() => setBubble(null), stay)
   }, [message])
 
+  // 无气泡时轮播悠闲姿态，让小象看起来更鲜活
+  useEffect(() => {
+    const t = window.setInterval(() => setIdleIdx((i) => (i + 1) % IDLE_POSES.length), IDLE_ROTATE_MS)
+    return () => window.clearInterval(t)
+  }, [])
+
   const mood: PetMood = bubble?.mood ?? 'idle'
   const anim =
     mood === 'celebrate' ? 'pet-jump' : mood === 'sleepy' ? 'pet-sway' : mood === 'shock' ? 'pet-tremble' : 'pet-bob'
+
+  const img = thinking ? THINKING_IMG : bubble ? MOOD_IMG[mood] : IDLE_POSES[idleIdx]
 
   const poke = () => {
     const text = POKE_LINES[Math.floor(Math.random() * POKE_LINES.length)]
@@ -167,9 +126,14 @@ export default function Pet({ message, thinking, aiOn, voiceOn, onOpenSettings }
       <button
         onClick={poke}
         title="戳我一下～"
-        className={`relative h-24 w-24 cursor-pointer drop-shadow-lg ${anim}`}
+        className={`relative flex h-28 w-28 cursor-pointer items-center justify-center drop-shadow-lg ${anim}`}
       >
-        <PetFace mood={thinking ? 'happy' : mood} />
+        <img
+          src={assetUrl(img)}
+          alt="鱼蛋"
+          draggable={false}
+          className="max-h-full max-w-full object-contain transition-opacity duration-300"
+        />
         {mood === 'sleepy' && <span className="absolute -right-1 top-1 animate-pulse text-lg">💤</span>}
         {mood === 'celebrate' && <span className="absolute -left-2 -top-2 animate-bounce text-xl">🎉</span>}
       </button>
