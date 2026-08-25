@@ -32,7 +32,8 @@ export default function SettingsPanel({
     setTesting(true)
     setTestMsg(null)
     const r = await testConnection(draft)
-    setTestMsg(r)
+    if (r.ok && !draft.enabled) setDraft((d) => ({ ...d, enabled: true })) // 测通即启用，省去手动勾开关
+    setTestMsg(r.ok ? { ...r, message: `${r.message}（已自动开启 AI 氛围组，记得保存）` } : r)
     setTesting(false)
   }
 
