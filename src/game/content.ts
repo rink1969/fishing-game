@@ -106,6 +106,7 @@ export const LOCATIONS: LocationDef[] = [
     skyTop: '#cfeefe',
     skyMid: '#8fd0e8',
     water: '#3a7e9e',
+    bg: 'spots/spot_moonlit_pond.jpg',
   },
   {
     id: 'reed_river',
