@@ -3,7 +3,7 @@ import { FishingEngine, rarityLabel, assetUrl, formatWeight, type CatchResult, t
 import { loadEconomy, saveEconomy, buyBait, gotoLocation, sellAll, addCatch, consumeBait, baitCount, type EconomyState } from './game/economy'
 import { BAITS, FISH_BY_ID } from './game/content'
 import EconomyBar from './components/EconomyBar'
-import { companionSay, loadConfig, saveConfig, CANNED_ONLY, type LLMConfig, type PetMood, type Trigger } from './pet/companion'
+import { companionSay, loadConfig, saveConfig, CANNED_ONLY, CONFIG_KEY, type LLMConfig, type PetMood, type Trigger } from './pet/companion'
 import Pet, { type PetMessage } from './components/Pet'
 import SettingsPanel from './components/SettingsPanel'
 import { speak, stopSpeaking } from './pet/voice'
@@ -148,8 +148,10 @@ export default function App() {
     engineRef.current?.setPaused(false)
   }
   const restartGame = () => {
-    if (!window.confirm('确定要重新开始吗？存档、图鉴、经济、AI 配置都会清空！')) return
+    if (!window.confirm('确定要重新开始吗？存档、图鉴、经济都会清空（AI 配置保留）！')) return
+    const llmRaw = localStorage.getItem(CONFIG_KEY) // AI 配置保留
     localStorage.clear()
+    if (llmRaw) localStorage.setItem(CONFIG_KEY, llmRaw)
     location.reload()
   }
 
@@ -481,7 +483,7 @@ export default function App() {
             )}
 
             <button onClick={restartGame} className="tang-btn-gold w-full py-2.5 text-[15px]">
-              🔄 重新开始游戏（清空全部存档）
+              🔄 重新开始游戏（保留 AI 配置）
             </button>
             <button onClick={closeHome} className="tang-btn mt-2 w-full py-2 text-[13px]">
               继续钓鱼 🎣

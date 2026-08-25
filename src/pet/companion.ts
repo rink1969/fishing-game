@@ -13,7 +13,7 @@ export interface LLMConfig {
   noThink: boolean // 关闭推理模型的思考模式（LM Studio 跑 Qwen3 等需要）
 }
 
-const CONFIG_KEY = 'fishing-llm-config'
+export const CONFIG_KEY = 'fishing-llm-config'
 
 export const DEFAULT_CONFIG: LLMConfig = {
   enabled: false,
