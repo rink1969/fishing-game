@@ -51,9 +51,17 @@ export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy,
 
       {/* 右侧竖直菜单 */}
       <div data-ui className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-end gap-2">
-        {/* 饵选择 */}
-        <div className="tang-panel flex max-w-[190px] flex-wrap justify-end gap-1 !rounded-xl px-2 py-1.5">
-          {ownedBaits.length === 0 && <span className="px-1 text-[12px] text-red-300">无饵</span>}
+        <button onClick={() => setPanel('loc')} className="tang-btn w-[120px] px-3 py-2 text-[13px]">📍 钓点</button>
+        <button onClick={() => setPanel('shop')} className="tang-btn w-[120px] px-3 py-2 text-[13px]">🛒 商店</button>
+        <button onClick={() => setPanel('bag')} className="tang-btn relative w-[120px] px-3 py-2 text-[13px]">
+          🎒 渔篓{bagValue > 0 && <span className="tang-chip-gold ml-1 px-1.5 text-[11px]">+{bagValue}</span>}
+        </button>
+      </div>
+
+      {/* 底部中央：鱼饵选择（避开遛鱼张力条区域，张力条在底部 ~100px 内） */}
+      <div data-ui className="absolute bottom-[116px] left-1/2 z-20 flex -translate-x-1/2 justify-center">
+        <div className="tang-panel flex max-w-[70vw] flex-wrap justify-center gap-1.5 !rounded-xl px-2.5 py-1.5">
+          {ownedBaits.length === 0 && <span className="px-1 text-[12px] text-red-300">无饵 · 去 🛒 商店补货</span>}
           {ownedBaits.map((b) => (
             <button
               key={b.id}
@@ -68,11 +76,6 @@ export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy,
             </button>
           ))}
         </div>
-        <button onClick={() => setPanel('loc')} className="tang-btn w-[120px] px-3 py-2 text-[13px]">📍 钓点</button>
-        <button onClick={() => setPanel('shop')} className="tang-btn w-[120px] px-3 py-2 text-[13px]">🛒 商店</button>
-        <button onClick={() => setPanel('bag')} className="tang-btn relative w-[120px] px-3 py-2 text-[13px]">
-          🎒 渔篓{bagValue > 0 && <span className="tang-chip-gold ml-1 px-1.5 text-[11px]">+{bagValue}</span>}
-        </button>
       </div>
 
       {panel === 'loc' && (
