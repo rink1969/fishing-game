@@ -47,6 +47,7 @@ export type Trigger =
   | 'escaped'
   | 'snapped'
   | 'caught' // 钓到鱼庆祝（AI）
+  | 'home' // 收竿回家的本次总结（AI）
 
 /** 这些快速变化的事件永远用本地台词，AI 来不及反应 */
 export const CANNED_ONLY: ReadonlySet<Trigger> = new Set([
@@ -113,6 +114,11 @@ const LINES: Record<Exclude<Trigger, 'caught'>, string[]> = {
     '啪——！下次张力别拉满啊！',
     '断线了…那条鱼现在肯定很得意😤',
   ],
+  home: [
+    '今天也是满载而归的一天，回家吃鱼去咯～',
+    '收竿！渔篓沉甸甸的，心满意足🐘',
+    '夕阳西下，带着渔获回家，明天再来！',
+  ],
 }
 
 const CAUGHT_COMMON = [
@@ -177,6 +183,9 @@ function buildPrompt(trigger: Trigger, ctx: SayContext): string {
       return `${env}玩家刚钓到一条 ${r.weight}kg 的【${sp.name}】（${rarityLabel(sp.rarity)}）！${sizeNote}${
         sp.rarity >= 4 ? '这是传说级的鱼！疯狂庆祝！' : sp.rarity >= 3 ? '这是稀有鱼！大声庆祝！' : '一起庆祝！'
       }${ctx.isRecord ? '这是玩家的新纪录！' : ''}说一句话庆祝，可以点评这条鱼，不要报时间。`
+    }
+    case 'home': {
+      return `${env}玩家收竿回家了。本次战绩：${ctx.stats ?? '暂无数据'}。用两三句话温柔地总结这次钓鱼之旅（60字以内），有梗、治愈，可以念一句应景的诗收尾。不要报时间。`
     }
     default:
       return '陪玩家钓鱼，说一句话活跃气氛，不要报时间。'

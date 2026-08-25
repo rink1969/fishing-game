@@ -12,6 +12,7 @@ interface Props {
   onGoto: (id: string) => void
   onSell: () => void
   onOpenSettings: () => void
+  onHome: () => void
 }
 
 type Panel = 'none' | 'loc' | 'shop' | 'bag'
@@ -33,7 +34,7 @@ function Modal({ title, onClose, children }: { title: string; onClose: () => voi
   )
 }
 
-export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy, onGoto, onSell, onOpenSettings }: Props) {
+export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy, onGoto, onSell, onOpenSettings, onHome }: Props) {
   const [panel, setPanel] = useState<Panel>('none')
   const locName = LOCATIONS.find((l) => l.id === economy.locationId)?.name ?? economy.locationId
   const bagValue = economy.bag.reduce((a, c) => a + c.value, 0)
@@ -58,6 +59,7 @@ export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy,
         <button onClick={() => setPanel('bag')} className="tang-btn relative w-[120px] px-3 py-2 text-[13px]">
           🎒 渔篓{bagValue > 0 && <span className="tang-chip-gold ml-1 px-1.5 text-[11px]">+{bagValue}</span>}
         </button>
+        <button onClick={onHome} className="tang-btn w-[120px] px-3 py-2 text-[13px]">🏠 回家</button>
       </div>
 
       {/* 底部中央：鱼饵选择（避开遛鱼张力条区域，张力条在底部 ~100px 内） */}

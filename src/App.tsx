@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { FishingEngine, rarityLabel, assetUrl, formatWeight, type CatchResult, type EngineEvent } from './game/engine'
 import { loadEconomy, saveEconomy, buyBait, gotoLocation, sellAll, addCatch, consumeBait, baitCount, type EconomyState } from './game/economy'
-import { BAITS } from './game/content'
+import { BAITS, FISH_BY_ID } from './game/content'
 import EconomyBar from './components/EconomyBar'
 import { companionSay, loadConfig, saveConfig, CANNED_ONLY, type LLMConfig, type PetMood, type Trigger } from './pet/companion'
 import Pet, { type PetMessage } from './components/Pet'
@@ -38,6 +38,7 @@ const TRIGGER_MOOD: Record<Trigger, PetMood> = {
   escaped: 'sad',
   snapped: 'shock',
   caught: 'celebrate',
+  home: 'celebrate',
 }
 
 export default function App() {
@@ -62,6 +63,23 @@ export default function App() {
   const [lastCatch, setLastCatch] = useState<{ result: CatchResult; isRecord: boolean } | null>(null)
   const msgId = useRef(0)
   const saySeq = useRef(0)
+
+  // ---------------- 回家结算 ----------------
+  interface SessionStats {
+    casts: number // 抛竿次数 = 鱼饵消耗
+    caught: number // 鱼（不含杂物）
+    junk: number
+    weight: number
+    value: number
+    species: Record<string, number>
+  }
+  const emptySession: SessionStats = { casts: 0, caught: 0, junk: 0, weight: 0, value: 0, species: {} }
+  const [session, setSession] = useState<SessionStats>({ ...emptySession })
+  const sessionRef = useRef(session)
+  sessionRef.current = session
+  const [homeOpen, setHomeOpen] = useState(false)
+  const [homeSummary, setHomeSummary] = useState<{ text: string; fromAI: boolean } | null>(null)
+  const [homeLoading, setHomeLoading] = useState(false)
 
   // ---------------- 经济层 ----------------
   const [economy, setEconomy] = useState<EconomyState>(loadEconomy)
@@ -99,6 +117,40 @@ export default function App() {
     const { state, gained } = sellAll(economy)
     setEconomy(state)
     setToast(gained > 0 ? `卖出渔获，+${gained} 灵玉` : '渔篓里没有可卖的鱼')
+  }
+
+  // ---------------- 回家结算 ----------------
+  const handleHome = () => {
+    engineRef.current?.setPaused(true)
+    setHomeSummary(null)
+    setHomeOpen(true)
+    const s = sessionRef.current
+    const parts = [
+      `抛竿 ${s.casts} 次`,
+      `钓到鱼 ${s.caught} 条（总重 ${formatWeight(s.weight)}，价值 ${s.value} 灵玉）`,
+    ]
+    if (s.junk > 0) parts.push(`杂物 ${s.junk} 件`)
+    const cfg = configRef.current
+    if (cfg.enabled && cfg.apiKey) {
+      setHomeLoading(true)
+      void companionSay('home', cfg, {
+        stats: parts.join('；'),
+        env: getEnvString(),
+      }).then((r) => {
+        setHomeSummary({ text: r.text, fromAI: r.fromAI })
+        setHomeLoading(false)
+        speakLine(r.text, 'celebrate')
+      })
+    }
+  }
+  const closeHome = () => {
+    setHomeOpen(false)
+    engineRef.current?.setPaused(false)
+  }
+  const restartGame = () => {
+    if (!window.confirm('确定要重新开始吗？存档、图鉴、经济、AI 配置都会清空！')) return
+    localStorage.clear()
+    location.reload()
   }
 
   const speakLine = (text: string, mood: PetMood) => {
@@ -169,6 +221,7 @@ export default function App() {
         case 'cast':
           if (Math.random() < 0.5) void petSpeak('cast')
           setEconomy((e) => consumeBait(e, baitRef.current))
+          setSession((s) => ({ ...s, casts: s.casts + 1 }))
           break
         case 'nibble':
           void petSpeak('nibble')
@@ -213,6 +266,15 @@ export default function App() {
           setLastCatch({ result: r, isRecord })
           if (!r.isJunk && r.species) {
             setEconomy((e) => addCatch(e, r.species!.id, r.weight, r.value))
+            setSession((s) => ({
+              ...s,
+              caught: s.caught + 1,
+              weight: Math.round((s.weight + r.weight) * 1000) / 1000,
+              value: s.value + r.value,
+              species: { ...s.species, [r.species!.id]: (s.species[r.species!.id] ?? 0) + 1 },
+            }))
+          } else if (r.isJunk) {
+            setSession((s) => ({ ...s, junk: s.junk + 1 }))
           }
           void petSpeak('caught', r, isRecord)
           break
@@ -363,6 +425,71 @@ export default function App() {
         </div>
       )}
 
+      {/* 回家结算 */}
+      {homeOpen && (
+        <div data-ui className="tang-veil absolute inset-0 z-30 flex items-center justify-center" onClick={closeHome}>
+          <div
+            className="tang-panel tang-scroll max-h-[85vh] w-[440px] max-w-[92vw] overflow-y-auto p-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="tang-title-cream text-xl">🏠 收竿回家</h2>
+              <button onClick={closeHome} className="tang-btn rounded-lg px-2.5 py-1 text-sm">✕</button>
+            </div>
+
+            <div className="tang-item-dark mb-3 rounded-xl p-4">
+              <div className="tang-title-cream mb-2 text-[15px]">🎣 本次渔获</div>
+              {session.caught === 0 && session.junk === 0 ? (
+                <div className="text-[13px] text-[#f8efd8]/55">本次还没有渔获，鱼儿都回家吃饭了。</div>
+              ) : (
+                <>
+                  <div className="text-[13px] text-[#f8efd8]/85">
+                    鱼 <b className="text-[#f0cb73]">{session.caught}</b> 条 · 总重{' '}
+                    <b className="text-[#f0cb73]">{formatWeight(session.weight)}</b> · 价值{' '}
+                    <b className="text-[#f0cb73]">{session.value}</b> 灵玉
+                    {session.junk > 0 && <span className="ml-1 text-[#f8efd8]/55">（另有杂物 {session.junk} 件）</span>}
+                  </div>
+                  <div className="mt-2 space-y-1">
+                    {Object.entries(session.species).map(([fid, n]) => (
+                      <div key={fid} className="flex justify-between text-[12px] text-[#f8efd8]/75">
+                        <span>{FISH_BY_ID[fid]?.name ?? fid}</span>
+                        <span>×{n}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="tang-item-dark mb-3 flex justify-between rounded-xl px-4 py-3 text-[13px] text-[#f8efd8]/85">
+              <span>🪱 鱼饵消耗：<b className="text-[#f0cb73]">{session.casts}</b> 个</span>
+              <span>💰 剩余灵玉：<b className="text-[#f0cb73]">{economy.money}</b></span>
+            </div>
+
+            {(homeLoading || homeSummary) && (
+              <div className="tang-parchment mb-3 rounded-xl px-4 py-3 text-[13px] leading-relaxed">
+                <span className="tang-label mr-1">鱼蛋总结</span>
+                {homeLoading ? (
+                  <span className="pet-dots text-[#786c4b]">鱼蛋回忆中</span>
+                ) : (
+                  <>
+                    {homeSummary!.text}
+                    <span className="ml-1.5 text-[10px] opacity-60">{homeSummary!.fromAI ? '🤖AI' : '📻'}</span>
+                  </>
+                )}
+              </div>
+            )}
+
+            <button onClick={restartGame} className="tang-btn-gold w-full py-2.5 text-[15px]">
+              🔄 重新开始游戏（清空全部存档）
+            </button>
+            <button onClick={closeHome} className="tang-btn mt-2 w-full py-2 text-[13px]">
+              继续钓鱼 🎣
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 设置 */}
       <SettingsPanel
         open={settingsOpen}
@@ -385,6 +512,7 @@ export default function App() {
         onGoto={handleGoto}
         onSell={handleSell}
         onOpenSettings={() => setSettingsOpen(true)}
+        onHome={handleHome}
       />
 
       {toast && (
