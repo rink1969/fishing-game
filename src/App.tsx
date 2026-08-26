@@ -7,6 +7,7 @@ import { companionSay, loadConfig, saveConfig, CANNED_ONLY, CONFIG_KEY, type LLM
 import Pet, { type PetMessage } from './components/Pet'
 import SettingsPanel from './components/SettingsPanel'
 import { speak, stopSpeaking } from './pet/voice'
+import { bgmOn, setBgm, startBgm } from './game/bgm'
 import './pet/pet.css'
 import './tang.css'
 
@@ -57,7 +58,8 @@ export default function App() {
   const settingsOpenRef = useRef(settingsOpen)
   settingsOpenRef.current = settingsOpen
   const [muted, setMuted] = useState(false)
-  const [voiceOn, setVoiceOn] = useState(() => localStorage.getItem('fishing-voice-on') !== '0')
+  const [voiceOn, setVoiceOn] = useState(() => localStorage.getItem('fishing-voice-on') === '1') // 默认关
+  const [bgm, setBgmState] = useState(bgmOn)
   const voiceOnRef = useRef(voiceOn)
   voiceOnRef.current = voiceOn
   const [lastCatch, setLastCatch] = useState<{ result: CatchResult; isRecord: boolean } | null>(null)
@@ -310,6 +312,16 @@ export default function App() {
     engineRef.current?.setMuted(muted)
   }, [muted])
 
+  // 背景音乐：启动时按开关播放（被浏览器拦截则等首次交互）
+  useEffect(() => {
+    startBgm()
+  }, [])
+
+  const toggleBgm = (v: boolean) => {
+    setBgmState(v)
+    setBgm(v)
+  }
+
   // 打开设置时暂停整个游戏：冻结引擎、停止朗读
   useEffect(() => {
     engineRef.current?.setPaused(settingsOpen)
@@ -515,11 +527,13 @@ export default function App() {
         config={config}
         muted={muted}
         voiceOn={voiceOn}
+        bgmOn={bgm}
         codex={save.codex}
         onClose={() => setSettingsOpen(false)}
         onSave={handleSaveConfig}
         onMute={setMuted}
         onVoiceChange={toggleVoice}
+        onBgmChange={toggleBgm}
         onResetSave={resetSave}
       />
 

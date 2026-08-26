@@ -9,18 +9,20 @@ interface Props {
   config: LLMConfig
   muted: boolean
   voiceOn: boolean
+  bgmOn: boolean
   codex: Record<string, number>
   onClose: () => void
   onSave: (c: LLMConfig) => void
   onMute: (m: boolean) => void
   onVoiceChange: (v: boolean) => void
+  onBgmChange: (v: boolean) => void
   onResetSave: () => void
 }
 
 const RARITY_STAR: Record<number, string> = { 1: '★', 2: '★★', 3: '★★★', 4: '★★★★', 5: '★★★★★', 6: '★★★★★★' }
 
 export default function SettingsPanel({
-  open, config, muted, voiceOn, codex, onClose, onSave, onMute, onVoiceChange, onResetSave,
+  open, config, muted, voiceOn, bgmOn, codex, onClose, onSave, onMute, onVoiceChange, onBgmChange, onResetSave,
 }: Props) {
   const [draft, setDraft] = useState<LLMConfig>(config)
   const [testing, setTesting] = useState(false)
@@ -141,6 +143,18 @@ export default function SettingsPanel({
               className={`px-3 py-1.5 text-sm ${muted ? 'tang-btn' : 'tang-btn-jade'}`}
             >
               {muted ? '已静音' : '开启中'}
+            </button>
+          </div>
+          <div className="mt-3 flex items-center justify-between border-t border-[#c9a86f]/25 pt-3">
+            <span className="tang-title-cream text-[16px]">
+              🎵 背景音乐
+              <span className="mt-0.5 block font-[system-ui] text-[11px] font-normal tracking-normal text-[#f8efd8]/50">炉边小调，循环播放</span>
+            </span>
+            <button
+              onClick={() => onBgmChange(!bgmOn)}
+              className={`shrink-0 px-3 py-1.5 text-sm ${bgmOn ? 'tang-btn-jade' : 'tang-btn'}`}
+            >
+              {bgmOn ? '开启中' : '已关闭'}
             </button>
           </div>
           <div className="mt-3 flex items-center justify-between border-t border-[#c9a86f]/25 pt-3">

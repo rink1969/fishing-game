@@ -31,7 +31,8 @@ fishing-game/
     ├── game/
     │   ├── engine.ts           # ★ 核心：Canvas 状态机引擎 + 渲染（约 1000 行）
     │   ├── content.ts          # ★ 自动生成的游戏数据，勿手改（见下文）
-    │   └── economy.ts          # 元游戏经济：灵玉、鱼饵库存、钓点解锁、渔篓买卖
+    │   ├── economy.ts          # 元游戏经济：灵玉、鱼饵库存、钓点解锁、渔篓买卖
+    │   └── bgm.ts              # 背景音乐：单曲循环，自动播放策略兜底（首次手势后开播）
     ├── pet/
     │   ├── companion.ts        # 宠物大脑：台词库 + 大模型接入（OpenAI 兼容 /chat/completions）
     │   ├── voice.ts            # 浏览器 speechSynthesis 语音朗读
@@ -79,10 +80,11 @@ fishing-game/
 |---|---|---|
 | `fishing-economy` | 灵玉/鱼饵/渔篓/当前钓点 | 重置，但**保留已解锁钓点** |
 | `fishing-save` | 图鉴、纪录等元进度 | 清除 |
-| `fishing-llm-config` | AI 接口配置 + 氛围组开关 | **保留** |
-| `fishing-voice-on` | 语音开关 | **保留** |
+| `fishing-llm-config` | AI 接口配置 + 氛围组开关 | **保留**（用户明确要求） |
+| `fishing-voice-on` | 语音朗读开关（默认关） | 清除，回到默认值 |
+| `fishing-bgm-on` | 背景音乐开关（默认开） | 清除，回到默认值 |
 
-改「重新开始」逻辑时注意这个保留清单是用户明确要求过的。
+「重新开始」的实现是 `localStorage.clear()` 后只回写 AI 配置和已解锁钓点（见 App.tsx `restartGame`）；改保留清单需经过用户确认。
 
 ## 构建与验证
 
