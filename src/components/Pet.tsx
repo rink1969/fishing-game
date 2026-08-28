@@ -78,7 +78,7 @@ export default function Pet({ message, thinking, voiceOn }: Props) {
   }
 
   return (
-    <div data-ui className="pointer-events-auto absolute bottom-4 right-4 z-20 flex w-[240px] flex-col items-end gap-2">
+    <div data-ui className="pointer-events-auto absolute bottom-4 right-4 z-20 flex w-44 md:w-[240px] flex-col items-end gap-2">
       {/* 气泡（宣纸质感） */}
       {(bubble || thinking) && (
         <div className="pet-bubble tang-parchment relative max-w-full !rounded-2xl !rounded-tr-sm !border-2 px-3 py-2 text-[13px] leading-snug">
@@ -105,7 +105,7 @@ export default function Pet({ message, thinking, voiceOn }: Props) {
       <button
         onClick={poke}
         title="戳我一下～"
-        className={`relative flex h-28 w-28 cursor-pointer items-center justify-center drop-shadow-lg ${anim}`}
+        className={`relative flex h-24 w-24 cursor-pointer items-center justify-center drop-shadow-lg md:h-28 md:w-28 ${anim}`}
       >
         <img
           src={assetUrl(img)}

@@ -376,12 +376,13 @@ export default function App() {
       <canvas ref={canvasRef} className="absolute inset-0" />
 
       {/* 左上：渔获统计 */}
-      <div data-ui className="tang-panel absolute left-4 top-4 z-20 px-4 py-2.5">
-        <div className="tang-title-cream text-[17px]">🎣 钓鱼大师</div>
-        <div className="mt-1 space-y-0.5 text-[13px] text-[#f8efd8]/85">
+      {/* 左上：渔获统计（移动端紧凑，最重记录仅在桌面端显示） */}
+      <div data-ui className="tang-panel absolute left-4 top-4 z-20 px-3 py-2 md:px-4 md:py-2.5">
+        <div className="tang-title-cream text-[15px] md:text-[17px]">🎣 钓鱼大师</div>
+        <div className="mt-1 space-y-0.5 text-[12px] md:text-[13px] text-[#f8efd8]/85">
           <div>渔获：<b className="text-[#f0cb73]">{save.count}</b> 条 · 总重 <b className="text-[#f0cb73]">{formatWeight(save.totalWeight)}</b></div>
           {save.best && (
-            <div>最重的：{save.best.name} <b className="text-[#f0cb73]">{formatWeight(save.best.weight)}</b></div>
+            <div className="hidden md:block">最重的：{save.best.name} <b className="text-[#f0cb73]">{formatWeight(save.best.weight)}</b></div>
           )}
         </div>
       </div>
@@ -395,7 +396,7 @@ export default function App() {
 
       {/* AI 调用失败提示 */}
       {aiError && (
-        <div data-ui className="absolute bottom-[170px] right-4 z-20 w-[240px] rounded-xl border border-red-300/40 bg-red-950/85 px-3 py-2 text-[12px] leading-snug text-red-200 backdrop-blur">
+        <div data-ui className="absolute bottom-[200px] md:bottom-[170px] right-4 z-20 max-w-[80vw] w-[240px] rounded-xl border border-red-300/40 bg-red-950/85 px-3 py-2 text-[12px] leading-snug text-red-200 backdrop-blur">
           ⚠️ AI 调用失败，本条用了本地台词：
           <div className="mt-1 break-all text-red-300/80">{aiError}</div>
           <div className="mt-1 text-white/60">点右上角 ⚙️ 检查配置或测试连接</div>

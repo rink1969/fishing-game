@@ -43,34 +43,50 @@ export default function EconomyBar({ economy, selectedBait, onSelectBait, onBuy,
   return (
     <>
       {/* 顶栏：灵玉 / 地点 / 当前饵 */}
-      <div data-ui className="tang-pill absolute left-1/2 top-3 z-20 -translate-x-1/2 px-5 py-1.5 text-center">
-        <span className="text-[14px] font-bold text-[#f0cb73]">💰 {economy.money}</span>
-        <span className="mx-2.5 text-[#c9a86f]/50">|</span>
-        <span className="text-[13px]">📍 {locName}</span>
-        <span className="mx-2.5 text-[#c9a86f]/50">|</span>
-        <span className="text-[13px]">🪱 {BAIT_BY_ID[selectedBait]?.name ?? '—'} ×{baitCount(economy, selectedBait)}</span>
+      <div data-ui className="tang-pill absolute left-4 top-[88px] z-20 px-4 py-1 text-center md:left-1/2 md:-translate-x-1/2 md:top-3 md:px-5 md:py-1.5">
+        <span className="text-[12px] font-bold text-[#f0cb73] md:text-[14px]">💰 {economy.money}</span>
+        <span className="mx-1.5 text-[#c9a86f]/50 md:mx-2.5">|</span>
+        <span className="text-[11px] md:text-[13px]">📍 {locName}</span>
+        <span className="mx-1.5 text-[#c9a86f]/50 md:mx-2.5">|</span>
+        <span className="hidden md:inline text-[11px] md:text-[13px]">🪱 {BAIT_BY_ID[selectedBait]?.name ?? '—'} ×{baitCount(economy, selectedBait)}</span>
+        <span className="md:hidden text-[11px] md:text-[13px]">🪱 ×{baitCount(economy, selectedBait)}</span>
       </div>
 
       {/* 右侧竖直菜单 */}
       <div data-ui className="absolute right-3 top-1/2 z-20 flex -translate-y-1/2 flex-col items-end gap-2">
-        <button onClick={onOpenSettings} className="tang-btn w-[120px] px-3 py-2 text-[13px]">⚙️ 设置</button>
-        <button onClick={() => setPanel('loc')} className="tang-btn w-[120px] px-3 py-2 text-[13px]">📍 钓点</button>
-        <button onClick={() => setPanel('shop')} className="tang-btn w-[120px] px-3 py-2 text-[13px]">🛒 商店</button>
-        <button onClick={() => setPanel('bag')} className="tang-btn relative w-[120px] px-3 py-2 text-[13px]">
-          🎒 渔篓{bagValue > 0 && <span className="tang-chip-gold ml-1 px-1.5 text-[11px]">+{bagValue}</span>}
+        {/* 移动端改为纯图标窄按钮，桌面端显示图标+文字 */}
+        <button onClick={onOpenSettings} title="设置" className="tang-btn flex w-11 items-center justify-center gap-1.5 px-2 py-2 text-xs md:w-[120px] md:px-3 md:py-2 md:text-[13px]">
+          <span className="md:hidden">⚙️</span>
+          <span className="hidden md:inline">⚙️ 设置</span>
         </button>
-        <button onClick={onHome} className="tang-btn w-[120px] px-3 py-2 text-[13px]">🏠 回家</button>
+        <button onClick={() => setPanel('loc')} title="钓点" className="tang-btn flex w-11 items-center justify-center gap-1.5 px-2 py-2 text-xs md:w-[120px] md:px-3 md:py-2 md:text-[13px]">
+          <span className="md:hidden">📍</span>
+          <span className="hidden md:inline">📍 钓点</span>
+        </button>
+        <button onClick={() => setPanel('shop')} title="商店" className="tang-btn flex w-11 items-center justify-center gap-1.5 px-2 py-2 text-xs md:w-[120px] md:px-3 md:py-2 md:text-[13px]">
+          <span className="md:hidden">🛒</span>
+          <span className="hidden md:inline">🛒 商店</span>
+        </button>
+        <button onClick={() => setPanel('bag')} title="渔篓" className="tang-btn relative flex w-11 items-center justify-center gap-1.5 px-2 py-2 text-xs md:w-[120px] md:px-3 md:py-2 md:text-[13px]">
+          <span className="md:hidden">🎒</span>
+          <span className="hidden md:inline">🎒 渔篓</span>
+          {bagValue > 0 && <span className="tang-chip-gold absolute right-1 top-1 px-1 text-[9px] md:static md:ml-1 md:px-1.5 md:text-[11px]">+{bagValue}</span>}
+        </button>
+        <button onClick={onHome} title="回家" className="tang-btn flex w-11 items-center justify-center gap-1.5 px-2 py-2 text-xs md:w-[120px] md:px-3 md:py-2 md:text-[13px]">
+          <span className="md:hidden">🏠</span>
+          <span className="hidden md:inline">🏠 回家</span>
+        </button>
       </div>
 
-      {/* 底部中央：鱼饵选择（避开遛鱼张力条区域，张力条在底部 ~100px 内） */}
-      <div data-ui className="absolute bottom-[116px] left-1/2 z-20 flex -translate-x-1/2 justify-center">
-        <div className="tang-panel flex max-w-[70vw] flex-wrap justify-center gap-1.5 !rounded-xl px-2.5 py-1.5">
+      {/* 底部中央：鱼饵选择（移动端上移避开宠物，宽度自适应） */}
+      <div data-ui className="absolute bottom-[140px] md:bottom-[116px] left-1/2 z-20 flex -translate-x-1/2 justify-center">
+        <div className="tang-panel flex max-w-[82vw] md:max-w-[70vw] flex-wrap justify-center gap-1.5 !rounded-xl px-2.5 py-1.5">
           {ownedBaits.length === 0 && <span className="px-1 text-[12px] text-red-300">无饵 · 去 🛒 商店补货</span>}
           {ownedBaits.map((b) => (
             <button
               key={b.id}
               onClick={() => onSelectBait(b.id)}
-              className={`rounded-lg px-2 py-1 text-[12px] font-medium transition ${
+              className={`rounded-lg px-2 py-1 text-[11px] md:text-[12px] font-medium transition ${
                 b.id === selectedBait
                   ? 'tang-btn-gold'
                   : 'border border-[#c9a86f]/40 bg-[#f8efd8]/8 text-[#f8efd8]/85 hover:bg-[#f8efd8]/15'
