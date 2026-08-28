@@ -3,7 +3,8 @@ import { FishingEngine, rarityLabel, assetUrl, formatWeight, type CatchResult, t
 import { loadEconomy, saveEconomy, buyBait, gotoLocation, sellAll, addCatch, consumeBait, baitCount, STARTER, ECONOMY_KEY, type EconomyState } from './game/economy'
 import { BAITS, FISH_BY_ID } from './game/content'
 import EconomyBar from './components/EconomyBar'
-import { companionSay, loadConfig, saveConfig, CANNED_ONLY, CONFIG_KEY, type LLMConfig, type PetMood, type Trigger } from './pet/companion'
+import { companionSay, CANNED_ONLY, CONFIG_KEY, type LLMConfig, type PetMood, type Trigger } from './pet/companion'
+import { initWattHost, isManagedHost, loadInitialConfig } from './wattHost'
 import Pet, { type PetMessage } from './components/Pet'
 import SettingsPanel from './components/SettingsPanel'
 import { speak, stopSpeaking } from './pet/voice'
@@ -48,7 +49,7 @@ export default function App() {
   const [save, setSave] = useState<SaveData>(loadSave)
   const saveRef = useRef(save)
   saveRef.current = save
-  const [config, setConfig] = useState<LLMConfig>(loadConfig)
+  const [config, setConfig] = useState<LLMConfig>(loadInitialConfig)
   const configRef = useRef(config)
   configRef.current = config
   const [petMsg, setPetMsg] = useState<PetMessage | null>(null)
@@ -60,6 +61,7 @@ export default function App() {
   const [muted, setMuted] = useState(false)
   const [voiceOn, setVoiceOn] = useState(() => localStorage.getItem('fishing-voice-on') === '1') // 默认关
   const [bgm, setBgmState] = useState(bgmOn)
+  const [dismissHint, setDismissHint] = useState(false)
   const voiceOnRef = useRef(voiceOn)
   voiceOnRef.current = voiceOn
   const [lastCatch, setLastCatch] = useState<{ result: CatchResult; isRecord: boolean } | null>(null)
@@ -308,6 +310,12 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // WATT 托管 AI：首次读取 + 监听 watt:host-ready，覆盖「启动时已存在 / 加载后再注入」。
+  // 仅在本（watt）分支生效；普通浏览器无 Host，走 loadInitialConfig 的默认回退。
+  useEffect(() => {
+    return initWattHost((cfg) => setConfig(cfg))
+  }, [])
+
   useEffect(() => {
     engineRef.current?.setMuted(muted)
   }, [muted])
@@ -348,11 +356,6 @@ export default function App() {
     return () => window.clearInterval(iv)
   }, [petSpeak])
 
-  const handleSaveConfig = (c: LLMConfig) => {
-    saveConfig(c)
-    setConfig(c)
-  }
-
   const resetSave = () => {
     localStorage.removeItem(SAVE_KEY)
     setSave({ ...emptySave })
@@ -373,6 +376,13 @@ export default function App() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-[#0b1030] select-none">
+      {/* 普通浏览器降级提示：非托管环境才显示，可关闭 */}
+      {!isManagedHost() && !dismissHint && (
+        <div data-ui className="fixed left-1/2 top-3 z-[60] flex -translate-x-1/2 items-center gap-3 rounded-full border border-[#c9a86f]/50 bg-[#1a2246]/95 px-4 py-2 text-xs text-[#f8efd8]/90 shadow-xl backdrop-blur">
+          <span>📱 本页面需在 <b>WATT App</b> 中打开以启用托管 AI；当前为普通浏览器，可继续游戏（本地台词）</span>
+          <button onClick={() => setDismissHint(true)} className="px-1.5 py-0.5 text-[#f0cb73] hover:text-white" title="关闭">✕</button>
+        </div>
+      )}
       <canvas ref={canvasRef} className="absolute inset-0" />
 
       {/* 左上：渔获统计 */}
@@ -397,9 +407,9 @@ export default function App() {
       {/* AI 调用失败提示 */}
       {aiError && (
         <div data-ui className="absolute bottom-[200px] md:bottom-[170px] right-4 z-20 max-w-[80vw] w-[240px] rounded-xl border border-red-300/40 bg-red-950/85 px-3 py-2 text-[12px] leading-snug text-red-200 backdrop-blur">
-          ⚠️ AI 调用失败，本条用了本地台词：
+          ⚠️ AI 临时抽风，本条用了本地台词：
           <div className="mt-1 break-all text-red-300/80">{aiError}</div>
-          <div className="mt-1 text-white/60">点右上角 ⚙️ 检查配置或测试连接</div>
+          <div className="mt-1 text-white/60">AI 由 WATT App 自动注入，无需手动配置</div>
         </div>
       )}
 
@@ -525,13 +535,11 @@ export default function App() {
       {/* 设置 */}
       <SettingsPanel
         open={settingsOpen}
-        config={config}
         muted={muted}
         voiceOn={voiceOn}
         bgmOn={bgm}
         codex={save.codex}
         onClose={() => setSettingsOpen(false)}
-        onSave={handleSaveConfig}
         onMute={setMuted}
         onVoiceChange={toggleVoice}
         onBgmChange={toggleBgm}
