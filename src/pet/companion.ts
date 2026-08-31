@@ -221,10 +221,9 @@ async function callLLM(config: LLMConfig, userPrompt: string, timeoutMs = 10000)
         ],
         max_tokens: 300,
         temperature: 0.9,
-        // 推理模型（Qwen3 等）：双管齐下关思考，服务器不认识的字段会忽略
-        ...(config.noThink
-          ? { reasoning_effort: 'none', chat_template_kwargs: { enable_thinking: false } }
-          : {}),
+        // 思考模式会吃光 max_tokens 导致返回为空；本分支无开关，直接恒为关闭。
+        // 双管齐下（reasoning_effort + chat_template_kwargs），服务器不认识的字段会忽略。
+        ...{ reasoning_effort: 'none', chat_template_kwargs: { enable_thinking: false } },
       }),
       signal: controller.signal,
     })
@@ -245,7 +244,7 @@ async function callLLM(config: LLMConfig, userPrompt: string, timeoutMs = 10000)
     // content 为空但 reasoning 有内容时，至少给用户一句提示性错误
     if (!content) {
       const reason = data.choices?.[0]?.finish_reason === 'length'
-        ? '回复被 max_tokens 截断（推理模型的“思考”占满了额度，请在设置里勾选「关闭思考模式」）'
+        ? '回复被 max_tokens 截断（模型本次输出被截断，可稍后重试）'
         : `模型返回为空（原始响应片段: ${JSON.stringify(data).slice(0, 160)}）`
       throw new Error(reason)
     }
